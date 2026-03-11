@@ -329,18 +329,20 @@ export default function SalesPage() {
       </div>
 
       {/* 메인 탭 */}
-      <div className="flex flex-wrap gap-1 bg-[#2d3142] rounded-xl p-1 border border-[#3d4362]">
+      <div className="flex gap-1 bg-[#2d3142] rounded-xl p-1 border border-[#3d4362]">
         {[
-          { id: 'chart' as MainTab, label: '매출 현황', icon: TrendingUp },
-          { id: 'ledger_customer' as MainTab, label: '거래처별 거래장', icon: Users },
-          { id: 'ledger_period' as MainTab, label: '기간별 거래장', icon: BookOpen },
-          { id: 'direct_input' as MainTab, label: '거래 입력', icon: Plus },
+          { id: 'chart' as MainTab, label: '매출 현황', shortLabel: '현황', icon: TrendingUp },
+          { id: 'ledger_customer' as MainTab, label: '거래처별', shortLabel: '거래처', icon: Users },
+          { id: 'ledger_period' as MainTab, label: '기간별', shortLabel: '기간별', icon: BookOpen },
+          { id: 'direct_input' as MainTab, label: '거래 입력', shortLabel: '입력', icon: Plus },
         ].map(tab => (
           <button key={tab.id}
             onClick={() => setMainTab(tab.id)}
-            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${mainTab === tab.id ? 'bg-[#00d9ff] text-[#1a1d29]' : 'text-gray-400 hover:text-white'}`}
+            className={`flex items-center gap-1.5 px-2 sm:px-4 py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all flex-1 justify-center ${mainTab === tab.id ? 'bg-[#00d9ff] text-[#1a1d29]' : 'text-gray-400 hover:text-white'}`}
           >
-            <tab.icon size={15} />{tab.label}
+            <tab.icon size={14} />
+            <span className="hidden sm:inline">{tab.label}</span>
+            <span className="sm:hidden">{tab.shortLabel}</span>
           </button>
         ))}
       </div>

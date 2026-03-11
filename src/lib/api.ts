@@ -73,6 +73,12 @@ export const salesApi = {
 // ── 세금계산서 API ──
 export const taxApi = {
   getAll: () => apiFetch('/tax-invoices'),
+  insert: (invoice: unknown) =>
+    apiFetch('/tax-invoices', { method: 'POST', body: JSON.stringify(invoice) }),
+  update: (id: string, invoice: unknown) =>
+    apiFetch(`/tax-invoices/${id}`, { method: 'PUT', body: JSON.stringify(invoice) }),
+  delete: (id: string) =>
+    apiFetch(`/tax-invoices/${id}`, { method: 'DELETE' }),
   bulkInsert: (invoices: unknown[]) =>
     apiFetch('/tax-invoices/bulk', { method: 'POST', body: JSON.stringify({ invoices }) }),
   deleteAll: () =>
@@ -127,3 +133,31 @@ export const inventoryApi = {
   addTransaction: (tx: unknown) =>
     apiFetch('/inventory/transactions', { method: 'POST', body: JSON.stringify(tx) }),
 };
+
+// ── 소매 단골 고객 API (retail - 매출/순이익 미반영) ──
+export const retailCustomerApi = {
+  getAll: () => apiFetch('/retail-customers'),
+  save: (customer: unknown) =>
+    apiFetch('/retail-customers', { method: 'POST', body: JSON.stringify(customer) }),
+  update: (id: string, customer: unknown) =>
+    apiFetch(`/retail-customers/${id}`, { method: 'PUT', body: JSON.stringify(customer) }),
+  delete: (id: string) =>
+    apiFetch(`/retail-customers/${id}`, { method: 'DELETE' }),
+};
+
+export const retailSaleApi = {
+  getAll: (customerId?: string, from?: string, to?: string) => {
+    const params = new URLSearchParams();
+    if (customerId) params.set('customerId', customerId);
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    return apiFetch(`/retail-sales?${params}`);
+  },
+  insert: (sale: unknown) =>
+    apiFetch('/retail-sales', { method: 'POST', body: JSON.stringify(sale) }),
+  update: (id: string, sale: unknown) =>
+    apiFetch(`/retail-sales/${id}`, { method: 'PUT', body: JSON.stringify(sale) }),
+  delete: (id: string) =>
+    apiFetch(`/retail-sales/${id}`, { method: 'DELETE' }),
+};
+

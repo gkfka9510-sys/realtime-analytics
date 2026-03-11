@@ -7,24 +7,26 @@ import InventoryPage from '@/pages/InventoryPage';
 import TaxInvoicePage from '@/pages/TaxInvoicePage';
 import SettingsPage from '@/pages/SettingsPage';
 import MasterDataPage from '@/pages/MasterDataPage';
+import RetailCustomerPage from '@/pages/RetailCustomerPage';
 import {
   TrendingUp, DollarSign, Package, FileText, Bell, Menu, X,
   BarChart2, ShoppingCart, AlertTriangle, ChevronRight, Settings, Loader2,
-  Building2
+  Building2, Users, Clock, Crown, Star, Heart
 } from 'lucide-react';
 
 const formatKRW = (v: number) => `₩${v.toLocaleString('ko-KR')}`;
 
-type TabId = 'overview' | 'master' | 'sales' | 'profit' | 'inventory' | 'tax' | 'settings';
+type TabId = 'overview' | 'master' | 'sales' | 'profit' | 'inventory' | 'tax' | 'retail' | 'settings';
 
 const TABS: { id: TabId; label: string; icon: React.ElementType; color: string }[] = [
-  { id: 'overview', label: '홈', icon: BarChart2, color: '#00d9ff' },
-  { id: 'master', label: '기초데이터', icon: Building2, color: '#a78bfa' },
-  { id: 'sales', label: '매출 관리', icon: TrendingUp, color: '#00d9ff' },
-  { id: 'profit', label: '순이익', icon: DollarSign, color: '#10b981' },
-  { id: 'inventory', label: '재고 현황', icon: Package, color: '#f59e0b' },
-  { id: 'tax', label: '세금계산서', icon: FileText, color: '#7c3aed' },
-  { id: 'settings', label: '설정', icon: Settings, color: '#6b7280' },
+  { id: 'overview',  label: '홈',        icon: BarChart2,  color: '#00d9ff' },
+  { id: 'master',    label: '기초데이터', icon: Building2,  color: '#a78bfa' },
+  { id: 'sales',     label: '매출 관리',  icon: TrendingUp, color: '#00d9ff' },
+  { id: 'profit',    label: '순이익',     icon: DollarSign, color: '#10b981' },
+  { id: 'inventory', label: '재고 현황',  icon: Package,    color: '#f59e0b' },
+  { id: 'tax',       label: '세금계산서', icon: FileText,   color: '#7c3aed' },
+  { id: 'retail',    label: '단골 고객',  icon: Heart,      color: '#f472b6' },
+  { id: 'settings',  label: '설정',       icon: Settings,   color: '#6b7280' },
 ];
 
 interface Props {
@@ -36,7 +38,10 @@ interface Props {
 export default function RiceDashboard({ username, displayName, onLogout }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { salesRecords, riceProducts, inventory, taxInvoices, customers, items, isLoading } = useRice();
+  const {
+    salesRecords, riceProducts, inventory, taxInvoices,
+    customers, items, retailCustomers, retailSales, isLoading
+  } = useRice();
 
   // 이번달 통계
   const thisMonth = useMemo(() => {
@@ -74,6 +79,22 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
 
   const revenueChange = lastMonth > 0 ? ((thisMonth.revenue - lastMonth) / lastMonth) * 100 : 0;
   const lowStockItems = inventory.filter(i => i.currentStock < 5 && i.currentStock >= 0);
+
+  // 재구매 유도 대상 단골 (30일 이상 미구매)
+  const retailReminderCount = useMemo(() => {
+    const lastPurchase: Record<string, string> = {};
+    retailSales.forEach(s => {
+      if (!lastPurchase[s.customerId] || s.date > lastPurchase[s.customerId]) {
+        lastPurchase[s.customerId] = s.date;
+      }
+    });
+    return retailCustomers.filter(c => {
+      const last = lastPurchase[c.id];
+      if (!last) return false;
+      const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
+      return days >= 30;
+    }).length;
+  }, [retailCustomers, retailSales]);
 
   // 로딩 스피너
   if (isLoading) {
@@ -134,6 +155,51 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
           </div>
         ))}
       </div>
+
+      {/* 단골 고객 현황 카드 */}
+      {retailCustomers.length > 0 && (
+        <div className="bg-[#2d3142] rounded-xl p-4 border border-[#3d4362]">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-white font-semibold flex items-center gap-2">
+              <Heart size={16} className="text-pink-400" />
+              단골 고객 현황
+            </h3>
+            <button onClick={() => setActiveTab('retail')}
+              className="text-pink-400 text-xs hover:text-pink-300 flex items-center gap-1 transition-colors">
+              자세히 보기 <ChevronRight size={12} />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: '전체 고객', value: `${retailCustomers.length}명`, icon: Users, color: 'text-pink-400' },
+              { label: 'VIP 고객', value: `${retailCustomers.filter(c => c.grade === 'vip').length}명`, icon: Crown, color: 'text-yellow-400' },
+              { label: '이달 판매', value: `${retailSales.filter(s => s.date.startsWith(thisMonth.ym)).length}건`, icon: ShoppingCart, color: 'text-[#00d9ff]' },
+              { label: '재구매 유도', value: `${retailReminderCount}명`, icon: Clock, color: retailReminderCount > 0 ? 'text-yellow-400' : 'text-gray-500' },
+            ].map(card => (
+              <div key={card.label} onClick={() => setActiveTab('retail')}
+                className="bg-[#1a1d29] rounded-lg p-3 cursor-pointer hover:bg-[#3d4362]/30 transition-colors">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <card.icon size={13} className={card.color} />
+                  <span className="text-gray-400 text-xs">{card.label}</span>
+                </div>
+                <div className={`font-bold text-lg ${card.color}`}>{card.value}</div>
+              </div>
+            ))}
+          </div>
+          {retailReminderCount > 0 && (
+            <div className="mt-3 flex items-center gap-2 p-2.5 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <Clock size={13} className="text-yellow-400 flex-shrink-0" />
+              <p className="text-yellow-300 text-xs">
+                <strong>{retailReminderCount}명</strong>의 단골 고객이 30일 이상 구매하지 않았습니다.
+              </p>
+              <button onClick={() => setActiveTab('retail')}
+                className="ml-auto text-yellow-400 text-xs hover:text-yellow-300 whitespace-nowrap flex items-center gap-0.5">
+                연락하기 <ChevronRight size={11} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 경고 알림 */}
       {(lowStockItems.length > 0 || thisMonth.unissuedCount > 0) && (
@@ -196,14 +262,14 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
       {/* 빠른 이동 */}
       <div>
         <h3 className="text-white font-semibold mb-3">빠른 이동</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {TABS.filter(t => t.id !== 'overview' && t.id !== 'settings').map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className="flex flex-col items-center gap-3 p-5 bg-[#2d3142] hover:bg-[#3d4362] border border-[#3d4362] rounded-xl transition-all hover:scale-[1.02]">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: `${tab.color}20` }}>
-                <tab.icon size={22} style={{ color: tab.color }} />
+              className="flex flex-col items-center gap-3 p-4 bg-[#2d3142] hover:bg-[#3d4362] border border-[#3d4362] rounded-xl transition-all hover:scale-[1.02]">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: `${tab.color}20` }}>
+                <tab.icon size={20} style={{ color: tab.color }} />
               </div>
-              <span className="text-white text-sm font-medium">{tab.label}</span>
+              <span className="text-white text-xs font-medium">{tab.label}</span>
             </button>
           ))}
         </div>
@@ -218,6 +284,7 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
               { step: '2', text: '순이익 탭에서 취급 품목(쌀 종류)과 원가를 등록하세요', tab: 'profit' as TabId },
               { step: '3', text: '매출 관리 탭에서 CSV 업로드 또는 직접 입력하세요', tab: 'sales' as TabId },
               { step: '4', text: '재고 현황 탭에서 현재 재고를 설정하세요', tab: 'inventory' as TabId },
+              { step: '5', text: '단골 고객 탭에서 소매 고객을 등록하고 구매 이력을 관리하세요', tab: 'retail' as TabId },
             ].map(item => (
               <div key={item.step} onClick={() => setActiveTab(item.tab)}
                 className="flex items-start gap-3 p-3 rounded-lg hover:bg-[#3d4362] cursor-pointer transition-colors group">
@@ -240,42 +307,47 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
       )}
 
       {/* 사이드바 */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-[#2d3142] border-r border-[#3d4362] flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="p-6 border-b border-[#3d4362]">
+      <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-60 bg-[#2d3142] border-r border-[#3d4362] flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <div className="p-5 border-b border-[#3d4362]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00d9ff] to-[#7c3aed] flex items-center justify-center text-xl">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00d9ff] to-[#7c3aed] flex items-center justify-center text-lg flex-shrink-0">
                 🌾
               </div>
-              <div>
-                <h1 className="text-white font-bold text-base">쌀집 대시보드</h1>
-                <p className="text-gray-400 text-xs truncate max-w-[120px]">{displayName}</p>
+              <div className="min-w-0">
+                <h1 className="text-white font-bold text-sm">쌀집 대시보드</h1>
+                <p className="text-gray-400 text-xs truncate">{displayName}</p>
               </div>
             </div>
-            <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-400 hover:text-white">
-              <X size={20} />
+            <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-400 hover:text-white flex-shrink-0">
+              <X size={18} />
             </button>
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
           {TABS.map(tab => {
             const isActive = activeTab === tab.id;
             return (
               <button key={tab.id}
                 onClick={() => { setActiveTab(tab.id); setSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-[#3d4362] text-white' : 'text-gray-400 hover:text-white hover:bg-[#3d4362]/50'}`}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-[#3d4362] text-white' : 'text-gray-400 hover:text-white hover:bg-[#3d4362]/50'}`}
               >
-                <tab.icon size={18} style={{ color: isActive ? tab.color : undefined }} />
-                {tab.label}
+                <tab.icon size={17} style={{ color: isActive ? tab.color : undefined }} />
+                <span className="truncate">{tab.label}</span>
                 {tab.id === 'tax' && thisMonth.unissuedCount > 0 && (
-                  <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  <span className="ml-auto bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
                     {thisMonth.unissuedCount}
                   </span>
                 )}
                 {tab.id === 'inventory' && lowStockItems.length > 0 && (
-                  <span className="ml-auto bg-yellow-500 text-black text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  <span className="ml-auto bg-yellow-500 text-black text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
                     {lowStockItems.length}
+                  </span>
+                )}
+                {tab.id === 'retail' && retailReminderCount > 0 && (
+                  <span className="ml-auto bg-pink-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                    {retailReminderCount}
                   </span>
                 )}
               </button>
@@ -283,7 +355,7 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
           })}
         </nav>
 
-        <div className="p-4 border-t border-[#3d4362]">
+        <div className="p-3 border-t border-[#3d4362]">
           <div className="bg-[#1a1d29] rounded-xl p-3">
             <p className="text-gray-400 text-xs mb-1">이번달 순이익</p>
             <p className={`font-bold text-base ${thisMonth.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -301,21 +373,28 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
               <Menu size={22} />
             </button>
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-400">🌾 쌀집</span>
-              <span className="text-gray-600">/</span>
+              <span className="text-gray-400 hidden sm:inline">🌾 쌀집</span>
+              <span className="text-gray-600 hidden sm:inline">/</span>
               <span className="text-white font-medium">{TABS.find(t => t.id === activeTab)?.label}</span>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {thisMonth.unissuedCount > 0 && (
               <button onClick={() => setActiveTab('tax')}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 text-red-400 rounded-lg text-xs font-medium hover:bg-red-500/30 transition-colors">
-                <Bell size={13} />
-                미발행 {thisMonth.unissuedCount}건
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-500/20 text-red-400 rounded-lg text-xs font-medium hover:bg-red-500/30 transition-colors">
+                <Bell size={12} />
+                <span className="hidden sm:inline">미발행 </span>{thisMonth.unissuedCount}건
+              </button>
+            )}
+            {retailReminderCount > 0 && (
+              <button onClick={() => setActiveTab('retail')}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-pink-500/20 text-pink-400 rounded-lg text-xs font-medium hover:bg-pink-500/30 transition-colors">
+                <Heart size={12} />
+                <span className="hidden sm:inline">재구매 </span>{retailReminderCount}명
               </button>
             )}
             <button onClick={() => setActiveTab('settings')}
-              className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00d9ff] to-[#7c3aed] flex items-center justify-center text-sm hover:scale-110 transition-transform"
+              className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00d9ff] to-[#7c3aed] flex items-center justify-center text-sm hover:scale-110 transition-transform flex-shrink-0"
               title={`${displayName} 설정`}
             >
               🌾
@@ -324,13 +403,14 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
         </header>
 
         <main className="flex-1 p-4 md:p-6 overflow-auto">
-          {activeTab === 'overview' && <OverviewPage />}
-          {activeTab === 'master' && <MasterDataPage />}
-          {activeTab === 'sales' && <SalesPage />}
-          {activeTab === 'profit' && <ProfitPage />}
+          {activeTab === 'overview'  && <OverviewPage />}
+          {activeTab === 'master'    && <MasterDataPage />}
+          {activeTab === 'sales'     && <SalesPage />}
+          {activeTab === 'profit'    && <ProfitPage />}
           {activeTab === 'inventory' && <InventoryPage />}
-          {activeTab === 'tax' && <TaxInvoicePage />}
-          {activeTab === 'settings' && (
+          {activeTab === 'tax'       && <TaxInvoicePage />}
+          {activeTab === 'retail'    && <RetailCustomerPage />}
+          {activeTab === 'settings'  && (
             <SettingsPage onLogout={onLogout} username={username} displayName={displayName} />
           )}
         </main>

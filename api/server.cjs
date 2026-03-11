@@ -163,6 +163,44 @@ db.exec(`
     reason TEXT,
     deleted_at TEXT DEFAULT (datetime('now','localtime'))
   );
+
+  -- 소매 단골 고객 (B2C)
+  CREATE TABLE IF NOT EXISTS retail_customers (
+    id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    phone TEXT DEFAULT '',
+    address TEXT DEFAULT '',
+    birth_date TEXT DEFAULT '',
+    preferred_product TEXT DEFAULT '',
+    purchase_cycle TEXT DEFAULT '',
+    grade TEXT DEFAULT 'regular',
+    memo TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now','localtime')),
+    updated_at TEXT DEFAULT (datetime('now','localtime'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_retail_customers_user ON retail_customers(user_id);
+
+  -- 소매 판매 기록 (순이익/매출현황에 미반영)
+  CREATE TABLE IF NOT EXISTS retail_sales (
+    id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    customer_id TEXT NOT NULL REFERENCES retail_customers(id) ON DELETE CASCADE,
+    date TEXT NOT NULL,
+    product_name TEXT DEFAULT '',
+    quantity REAL DEFAULT 0,
+    unit TEXT DEFAULT 'kg',
+    unit_price REAL DEFAULT 0,
+    total_amount REAL DEFAULT 0,
+    payment_method TEXT DEFAULT 'cash',
+    memo TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now','localtime'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_retail_sales_user ON retail_sales(user_id, date);
+  CREATE INDEX IF NOT EXISTS idx_retail_sales_customer ON retail_sales(customer_id);
+
+  -- 세금계산서 단건 등록 지원 (기존 bulk 외 단건)
+  CREATE INDEX IF NOT EXISTS idx_tax_invoices_user ON tax_invoices(user_id, issue_date);
 `);
 
 // ──────────────────────────────────────────────────────
@@ -610,6 +648,83 @@ app.put('/api/items/:id', authMiddleware, (req, res) => {
 
 app.delete('/api/items/:id', authMiddleware, (req, res) => {
   db.prepare('DELETE FROM items WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ deleted: true });
+});
+
+// ──────────────────────────────────────────────────────
+// 세금계산서 단건 등록/수정/삭제
+// ──────────────────────────────────────────────────────
+app.post('/api/tax-invoices', authMiddleware, (req, res) => {
+  const { id, issueDate, companyName, totalAmount, memo } = req.body;
+  if (!id || !issueDate || !companyName) return res.status(400).json({ error: '필수 항목 누락' });
+  db.prepare('INSERT OR REPLACE INTO tax_invoices (id,user_id,issue_date,company_name,total_amount,memo) VALUES (?,?,?,?,?,?)')
+    .run(id, req.user.id, issueDate, companyName, totalAmount || 0, memo || '');
+  res.json({ ok: true });
+});
+app.put('/api/tax-invoices/:id', authMiddleware, (req, res) => {
+  const { issueDate, companyName, totalAmount, memo } = req.body;
+  db.prepare("UPDATE tax_invoices SET issue_date=?,company_name=?,total_amount=?,memo=? WHERE id=? AND user_id=?")
+    .run(issueDate, companyName, totalAmount || 0, memo || '', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/tax-invoices/:id', authMiddleware, (req, res) => {
+  db.prepare('DELETE FROM tax_invoices WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ deleted: true });
+});
+
+// ──────────────────────────────────────────────────────
+// 소매 단골 고객 라우트 (retail_customers)
+// ──────────────────────────────────────────────────────
+app.get('/api/retail-customers', authMiddleware, (req, res) => {
+  const rows = db.prepare('SELECT * FROM retail_customers WHERE user_id=? ORDER BY name').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/retail-customers', authMiddleware, (req, res) => {
+  const { id, name, phone, address, birthDate, preferredProduct, purchaseCycle, grade, memo } = req.body;
+  if (!id || !name) return res.status(400).json({ error: '필수 항목 누락' });
+  db.prepare('INSERT OR REPLACE INTO retail_customers (id,user_id,name,phone,address,birth_date,preferred_product,purchase_cycle,grade,memo,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime(\'now\',\'localtime\'))')
+    .run(id, req.user.id, name, phone||'', address||'', birthDate||'', preferredProduct||'', purchaseCycle||'', grade||'regular', memo||'');
+  res.json({ ok: true });
+});
+app.put('/api/retail-customers/:id', authMiddleware, (req, res) => {
+  const { name, phone, address, birthDate, preferredProduct, purchaseCycle, grade, memo } = req.body;
+  db.prepare("UPDATE retail_customers SET name=?,phone=?,address=?,birth_date=?,preferred_product=?,purchase_cycle=?,grade=?,memo=?,updated_at=datetime('now','localtime') WHERE id=? AND user_id=?")
+    .run(name, phone||'', address||'', birthDate||'', preferredProduct||'', purchaseCycle||'', grade||'regular', memo||'', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/retail-customers/:id', authMiddleware, (req, res) => {
+  db.prepare('DELETE FROM retail_customers WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ deleted: true });
+});
+
+// ──────────────────────────────────────────────────────
+// 소매 판매 기록 라우트 (retail_sales) — 매출/순이익 미반영
+// ──────────────────────────────────────────────────────
+app.get('/api/retail-sales', authMiddleware, (req, res) => {
+  const { customerId, from, to } = req.query;
+  let sql = 'SELECT * FROM retail_sales WHERE user_id=?';
+  const params = [req.user.id];
+  if (customerId) { sql += ' AND customer_id=?'; params.push(customerId); }
+  if (from) { sql += ' AND date>=?'; params.push(from); }
+  if (to) { sql += ' AND date<=?'; params.push(to); }
+  sql += ' ORDER BY date DESC';
+  res.json(db.prepare(sql).all(...params));
+});
+app.post('/api/retail-sales', authMiddleware, (req, res) => {
+  const { id, customerId, date, productName, quantity, unit, unitPrice, totalAmount, paymentMethod, memo } = req.body;
+  if (!id || !customerId || !date) return res.status(400).json({ error: '필수 항목 누락' });
+  db.prepare('INSERT OR REPLACE INTO retail_sales (id,user_id,customer_id,date,product_name,quantity,unit,unit_price,total_amount,payment_method,memo) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
+    .run(id, req.user.id, customerId, date, productName||'', quantity||0, unit||'kg', unitPrice||0, totalAmount||0, paymentMethod||'cash', memo||'');
+  res.json({ ok: true });
+});
+app.put('/api/retail-sales/:id', authMiddleware, (req, res) => {
+  const { date, productName, quantity, unit, unitPrice, totalAmount, paymentMethod, memo } = req.body;
+  db.prepare('UPDATE retail_sales SET date=?,product_name=?,quantity=?,unit=?,unit_price=?,total_amount=?,payment_method=?,memo=? WHERE id=? AND user_id=?')
+    .run(date, productName||'', quantity||0, unit||'kg', unitPrice||0, totalAmount||0, paymentMethod||'cash', memo||'', req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+app.delete('/api/retail-sales/:id', authMiddleware, (req, res) => {
+  db.prepare('DELETE FROM retail_sales WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
   res.json({ deleted: true });
 });
 

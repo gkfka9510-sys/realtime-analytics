@@ -5,7 +5,7 @@ import { RiceProduct } from '@/types/rice';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
-import { Plus, Edit2, Trash2, Package, TrendingUp, DollarSign, Percent, Save, X, Info } from 'lucide-react';
+import { Plus, Edit2, Trash2, Package, TrendingUp, DollarSign, Percent, Save, X, Info, ChevronDown, ChevronUp } from 'lucide-react';
 
 const formatKRW = (v: number) => `₩${v.toLocaleString('ko-KR')}`;
 const formatNum = (v: number) => v.toLocaleString('ko-KR');
@@ -17,6 +17,39 @@ interface ProductFormData {
 }
 
 const DEFAULT_FORM: ProductFormData = { name: '', weightPerBag: 20, purchasePrice: 0 };
+
+// 접기/펼치기 가능한 미매칭 경고 컴포넌트
+function UnmatchedWarning({ unmatchedSales }: { unmatchedSales: { name: string; totalAmount: number; totalKg: number }[] }) {
+  const [collapsed, setCollapsed] = React.useState(false);
+  return (
+    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl overflow-hidden">
+      <button
+        onClick={() => setCollapsed(v => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-yellow-500/5 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-yellow-400 text-sm font-semibold">
+            ⚠️ 원가 미등록 품목 {unmatchedSales.length}건 — 순이익 계산에서 제외됨
+          </span>
+        </div>
+        {collapsed ? <ChevronDown size={15} className="text-yellow-400" /> : <ChevronUp size={15} className="text-yellow-400" />}
+      </button>
+      {!collapsed && (
+        <div className="px-4 pb-4">
+          <div className="space-y-1">
+            {unmatchedSales.map(u => (
+              <div key={u.name} className="flex items-center justify-between text-xs text-gray-400">
+                <span className="text-white">「{u.name}」</span>
+                <span>매출 {formatKRW(u.totalAmount)} / {formatNum(u.totalKg)}kg</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-gray-500 text-xs mt-2">위 품목명과 유사하게 원가를 등록하면 자동 매칭됩니다.</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // 품목명 매칭 헬퍼 (공통)
 function matchProduct(salesName: string, productName: string): boolean {
@@ -285,20 +318,9 @@ export default function ProfitPage() {
         </div>
       )}
 
-      {/* 원가 미등록 품목 경고 */}
+      {/* 원가 미등록 품목 경고 (접기/펼치기) */}
       {unmatchedSales.length > 0 && (
-        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
-          <p className="text-yellow-400 text-sm font-semibold mb-2">⚠️ 원가 미등록 품목 — 순이익 계산에서 제외됨</p>
-          <div className="space-y-1">
-            {unmatchedSales.map(u => (
-              <div key={u.name} className="flex items-center justify-between text-xs text-gray-400">
-                <span className="text-white">「{u.name}」</span>
-                <span>매출 {formatKRW(u.totalAmount)} / {formatNum(u.totalKg)}kg</span>
-              </div>
-            ))}
-          </div>
-          <p className="text-gray-500 text-xs mt-2">위 품목명과 유사하게 원가를 등록하면 자동 매칭됩니다.</p>
-        </div>
+        <UnmatchedWarning unmatchedSales={unmatchedSales} />
       )}
 
       {/* 월 선택 */}

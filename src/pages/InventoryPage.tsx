@@ -1,7 +1,7 @@
 // 재고 현황 페이지 - 재고 탭에서 직접 재고 추가/입고 가능
 import React, { useState, useMemo } from 'react';
 import { useRice } from '@/contexts/RiceContext';
-import { Package, Plus, RefreshCw, AlertTriangle, ArrowUp, ArrowDown, Settings, Save, X, TrendingUp } from 'lucide-react';
+import { Package, Plus, RefreshCw, AlertTriangle, ArrowUp, ArrowDown, Save, X, TrendingUp } from 'lucide-react';
 
 const formatKRW = (v: number) => `₩${v.toLocaleString('ko-KR')}`;
 const formatNum = (v: number) => v.toLocaleString('ko-KR');
@@ -332,15 +332,7 @@ export default function InventoryPage() {
                 </div>
 
                 {/* 액션 버튼 */}
-                <div className="grid grid-cols-4 gap-2">
-                  <button
-                    onClick={() => openModal(item.productId, item.productName, 'init', item.weightPerBag)}
-                    className="flex flex-col items-center gap-1 py-2 bg-[#1a1d29] hover:bg-[#3d4362] rounded-lg transition-colors"
-                    title="재고 초기설정"
-                  >
-                    <Settings size={14} className="text-gray-400" />
-                    <span className="text-[10px] text-gray-400">설정</span>
-                  </button>
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={() => openModal(item.productId, item.productName, 'in', item.weightPerBag)}
                     className="flex flex-col items-center gap-1 py-2 bg-green-500/10 hover:bg-green-500/25 rounded-lg transition-colors"

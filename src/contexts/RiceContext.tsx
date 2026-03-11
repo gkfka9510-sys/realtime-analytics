@@ -3,9 +3,9 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { v4 as uuidv4 } from 'uuid';
 import {
   SalesRecord, TaxInvoice, RiceProduct, InventoryItem, InventoryTransaction,
-  Customer, Item,
+  Customer, Item, RetailCustomer, RetailSale,
 } from '@/types/rice';
-import { salesApi, taxApi, productApi, inventoryApi, customerApi, itemApi } from '@/lib/api';
+import { salesApi, taxApi, productApi, inventoryApi, customerApi, itemApi, retailCustomerApi, retailSaleApi } from '@/lib/api';
 
 interface RiceContextType {
   // 매출
@@ -19,6 +19,9 @@ interface RiceContextType {
   taxInvoices: TaxInvoice[];
   setTaxInvoices: (invoices: TaxInvoice[]) => void;
   addTaxInvoices: (invoices: TaxInvoice[]) => Promise<void>;
+  addTaxInvoice: (invoice: TaxInvoice) => Promise<void>;
+  updateTaxInvoice: (id: string, invoice: Partial<TaxInvoice>) => Promise<void>;
+  deleteTaxInvoice: (id: string) => Promise<void>;
   // 쌀 품목(원가)
   riceProducts: RiceProduct[];
   addRiceProduct: (product: Omit<RiceProduct, 'id' | 'costPerKg'>) => Promise<void>;
@@ -40,6 +43,15 @@ interface RiceContextType {
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<void>;
   updateItem: (id: string, item: Partial<Item>) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
+  // 소매 단골 고객 (B2C - 매출/순이익 미반영)
+  retailCustomers: RetailCustomer[];
+  addRetailCustomer: (c: Omit<RetailCustomer, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateRetailCustomer: (id: string, c: Partial<RetailCustomer>) => Promise<void>;
+  deleteRetailCustomer: (id: string) => Promise<void>;
+  retailSales: RetailSale[];
+  addRetailSale: (sale: Omit<RetailSale, 'id'>) => Promise<void>;
+  updateRetailSale: (id: string, sale: Partial<RetailSale>) => Promise<void>;
+  deleteRetailSale: (id: string) => Promise<void>;
   // 공통
   refreshAll: () => Promise<void>;
   isLoading: boolean;
@@ -138,6 +150,35 @@ function mapItem(r: Record<string, unknown>): Item {
     createdAt: (r.created_at as string) || '',
   };
 }
+function mapRetailCustomer(r: Record<string, unknown>): RetailCustomer {
+  return {
+    id: r.id as string,
+    name: r.name as string,
+    phone: (r.phone as string) || '',
+    address: (r.address as string) || '',
+    birthDate: (r.birth_date as string) || '',
+    preferredProduct: (r.preferred_product as string) || '',
+    purchaseCycle: (r.purchase_cycle as string) || '',
+    grade: ((r.grade as string) || 'regular') as RetailCustomer['grade'],
+    memo: (r.memo as string) || '',
+    createdAt: (r.created_at as string) || '',
+    updatedAt: (r.updated_at as string) || '',
+  };
+}
+function mapRetailSale(r: Record<string, unknown>): RetailSale {
+  return {
+    id: r.id as string,
+    customerId: r.customer_id as string,
+    date: r.date as string,
+    productName: (r.product_name as string) || '',
+    quantity: Number(r.quantity) || 0,
+    unit: (r.unit as string) || 'kg',
+    unitPrice: Number(r.unit_price) || 0,
+    totalAmount: Number(r.total_amount) || 0,
+    paymentMethod: ((r.payment_method as string) || 'cash') as RetailSale['paymentMethod'],
+    memo: (r.memo as string) || '',
+  };
+}
 
 export const RiceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [salesRecords, setSalesRecordsState] = useState<SalesRecord[]>([]);
@@ -147,12 +188,14 @@ export const RiceProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [inventoryTransactions, setInventoryTransactions] = useState<InventoryTransaction[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [items, setItems] = useState<Item[]>([]);
+  const [retailCustomers, setRetailCustomers] = useState<RetailCustomer[]>([]);
+  const [retailSales, setRetailSales] = useState<RetailSale[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshAll = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [sales, tax, products, inv, invTx, custs, itms] = await Promise.all([
+      const [sales, tax, products, inv, invTx, custs, itms, rCusts, rSales] = await Promise.all([
         salesApi.getAll().catch(() => []),
         taxApi.getAll().catch(() => []),
         productApi.getAll().catch(() => []),
@@ -160,6 +203,8 @@ export const RiceProvider: React.FC<{ children: React.ReactNode }> = ({ children
         inventoryApi.getTransactions().catch(() => []),
         customerApi.getAll().catch(() => []),
         itemApi.getAll().catch(() => []),
+        retailCustomerApi.getAll().catch(() => []),
+        retailSaleApi.getAll().catch(() => []),
       ]);
       setSalesRecordsState((sales as Record<string, unknown>[]).map(mapSales));
       setTaxInvoicesState((tax as Record<string, unknown>[]).map(mapTax));
@@ -168,6 +213,8 @@ export const RiceProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setInventoryTransactions((invTx as Record<string, unknown>[]).map(mapInvTx));
       setCustomers((custs as Record<string, unknown>[]).map(mapCustomer));
       setItems((itms as Record<string, unknown>[]).map(mapItem));
+      setRetailCustomers((rCusts as Record<string, unknown>[]).map(mapRetailCustomer));
+      setRetailSales((rSales as Record<string, unknown>[]).map(mapRetailSale));
     } catch (err) {
       console.error('데이터 로드 오류:', err);
     }
@@ -213,6 +260,21 @@ export const RiceProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const existingIds = new Set(prev.map(r => r.id));
       return [...prev, ...invoices.filter(r => !existingIds.has(r.id))];
     });
+  }, []);
+
+  const addTaxInvoice = useCallback(async (invoice: TaxInvoice) => {
+    await taxApi.insert(invoice);
+    setTaxInvoicesState(prev => [invoice, ...prev]);
+  }, []);
+
+  const updateTaxInvoice = useCallback(async (id: string, update: Partial<TaxInvoice>) => {
+    await taxApi.update(id, update);
+    setTaxInvoicesState(prev => prev.map(t => t.id === id ? { ...t, ...update } : t));
+  }, []);
+
+  const deleteTaxInvoice = useCallback(async (id: string) => {
+    await taxApi.delete(id);
+    setTaxInvoicesState(prev => prev.filter(t => t.id !== id));
   }, []);
 
   const addRiceProduct = useCallback(async (product: Omit<RiceProduct, 'id' | 'costPerKg'>) => {
@@ -330,15 +392,52 @@ export const RiceProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setItems(prev => prev.filter(i => i.id !== id));
   }, []);
 
+  // 소매 단골 고객
+  const addRetailCustomer = useCallback(async (c: Omit<RetailCustomer, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const id = uuidv4();
+    await retailCustomerApi.save({ id, ...c });
+    setRetailCustomers(prev => [...prev, { id, ...c, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }]);
+  }, []);
+
+  const updateRetailCustomer = useCallback(async (id: string, update: Partial<RetailCustomer>) => {
+    await retailCustomerApi.update(id, update);
+    setRetailCustomers(prev => prev.map(c => c.id === id ? { ...c, ...update, updatedAt: new Date().toISOString() } : c));
+  }, []);
+
+  const deleteRetailCustomer = useCallback(async (id: string) => {
+    await retailCustomerApi.delete(id);
+    setRetailCustomers(prev => prev.filter(c => c.id !== id));
+    setRetailSales(prev => prev.filter(s => s.customerId !== id));
+  }, []);
+
+  // 소매 판매 기록
+  const addRetailSale = useCallback(async (sale: Omit<RetailSale, 'id'>) => {
+    const id = uuidv4();
+    await retailSaleApi.insert({ id, ...sale });
+    setRetailSales(prev => [{ id, ...sale }, ...prev]);
+  }, []);
+
+  const updateRetailSale = useCallback(async (id: string, update: Partial<RetailSale>) => {
+    await retailSaleApi.update(id, update);
+    setRetailSales(prev => prev.map(s => s.id === id ? { ...s, ...update } : s));
+  }, []);
+
+  const deleteRetailSale = useCallback(async (id: string) => {
+    await retailSaleApi.delete(id);
+    setRetailSales(prev => prev.filter(s => s.id !== id));
+  }, []);
+
   return (
     <RiceContext.Provider value={{
       salesRecords, setSalesRecords, addSalesRecords, addSalesRecord, updateSalesRecord, deleteSalesRecord,
-      taxInvoices, setTaxInvoices, addTaxInvoices,
+      taxInvoices, setTaxInvoices, addTaxInvoices, addTaxInvoice, updateTaxInvoice, deleteTaxInvoice,
       riceProducts, addRiceProduct, updateRiceProduct, deleteRiceProduct,
       inventory, inventoryTransactions, initInventory,
       addInventoryTransaction, updateInventory,
       customers, addCustomer, updateCustomer, deleteCustomer,
       items, addItem, updateItem, deleteItem,
+      retailCustomers, addRetailCustomer, updateRetailCustomer, deleteRetailCustomer,
+      retailSales, addRetailSale, updateRetailSale, deleteRetailSale,
       refreshAll, isLoading,
     }}>
       {children}
