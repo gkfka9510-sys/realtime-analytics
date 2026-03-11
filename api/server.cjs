@@ -492,11 +492,12 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
-// 정적 파일 제공 (빌드된 프론트엔드)
-app.use(express.static(path.join(__dirname, 'dist')));
+// 정적 파일 제공 (빌드된 프론트엔드 - webapp/dist)
+const DIST_PATH = path.join(__dirname, '..', 'dist');
+app.use(express.static(DIST_PATH));
 app.get('/{*path}', (req, res) => {
   if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    res.sendFile(path.join(DIST_PATH, 'index.html'));
   }
 });
 
