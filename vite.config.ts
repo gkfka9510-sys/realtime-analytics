@@ -6,6 +6,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 5173,
+    allowedHosts: "all",
     proxy: {
       '/api': {
         target: 'http://localhost:4000',
