@@ -8,25 +8,57 @@ export const tokenManager = {
   clear: () => localStorage.removeItem('rice_token'),
 };
 
+// ── 인증 만료 이벤트 (reload 대신 이벤트로 처리) ──
+let _authExpiredFired = false;
+export function onAuthExpired(handler: () => void) {
+  window.addEventListener('rice:authExpired', handler, { once: true });
+}
+function fireAuthExpired() {
+  if (!_authExpiredFired) {
+    _authExpiredFired = true;
+    window.dispatchEvent(new Event('rice:authExpired'));
+    // 5초 후 재활성화 (재시도 가능)
+    setTimeout(() => { _authExpiredFired = false; }, 5000);
+  }
+}
+
 // ── 공통 fetch 래퍼 ──
 async function apiFetch(path: string, options: RequestInit = {}) {
   const token = tokenManager.get();
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
-  });
-  if (res.status === 401) {
-    tokenManager.clear();
-    window.location.reload();
-    throw new Error('인증 만료');
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15초 타임아웃
+
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options.headers || {}),
+      },
+    });
+    clearTimeout(timeoutId);
+
+    if (res.status === 401) {
+      tokenManager.clear();
+      fireAuthExpired(); // reload 대신 이벤트 발행
+      throw new Error('인증 만료');
+    }
+    if (res.status === 429) {
+      throw new Error('요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
+    }
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '서버 오류');
+    return data;
+  } catch (err: unknown) {
+    clearTimeout(timeoutId);
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error('요청 시간 초과');
+    }
+    throw err;
   }
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '서버 오류');
-  return data;
 }
 
 // ── 인증 API ──
@@ -187,4 +219,3 @@ export const orderApi = {
   delete: (id: string) =>
     apiFetch(`/orders/${id}`, { method: 'DELETE' }),
 };
-

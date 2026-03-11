@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { RiceProvider } from '@/contexts/RiceContext';
 import RiceDashboard from '@/components/RiceDashboard';
 import LoginPage from '@/components/LoginPage';
-import { authApi, tokenManager } from '@/lib/api';
+import { authApi, tokenManager, onAuthExpired } from '@/lib/api';
 import { Loader2 } from 'lucide-react';
 
 const Index: React.FC = () => {
@@ -34,8 +34,24 @@ const Index: React.FC = () => {
       });
   }, []);
 
+  // 인증 만료 이벤트 리스너 (window.location.reload() 대신 로그인 화면으로 전환)
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      tokenManager.clear();
+      setAuthState({ checked: true, loggedIn: false, username: '', displayName: '' });
+    };
+    // 반복 등록 방지: 이벤트 리스너를 직접 등록
+    window.addEventListener('rice:authExpired', handleAuthExpired);
+    return () => window.removeEventListener('rice:authExpired', handleAuthExpired);
+  }, []);
+
   const handleLogin = (username: string, displayName: string) => {
     setAuthState({ checked: true, loggedIn: true, username, displayName });
+    // 새 로그인 후 인증만료 이벤트 리셋을 위해 onAuthExpired 재등록
+    onAuthExpired(() => {
+      tokenManager.clear();
+      setAuthState({ checked: true, loggedIn: false, username: '', displayName: '' });
+    });
   };
 
   const handleLogout = () => {

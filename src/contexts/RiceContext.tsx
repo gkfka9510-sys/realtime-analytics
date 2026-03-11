@@ -256,37 +256,54 @@ export const RiceProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshAll = useCallback(async () => {
     setIsLoading(true);
-    try {
-      const [sales, tax, products, inv, invTx, custs, itms, rCusts, rSales, sProds, ords, oStats] = await Promise.all([
-        salesApi.getAll().catch(() => []),
-        taxApi.getAll().catch(() => []),
-        productApi.getAll().catch(() => []),
-        inventoryApi.getAll().catch(() => []),
-        inventoryApi.getTransactions().catch(() => []),
-        customerApi.getAll().catch(() => []),
-        itemApi.getAll().catch(() => []),
-        retailCustomerApi.getAll().catch(() => []),
-        retailSaleApi.getAll().catch(() => []),
-        shopProductApi.getAll().catch(() => []),
-        orderApi.getAll().catch(() => []),
-        orderApi.getStats().catch(() => null),
-      ]);
-      setSalesRecordsState((sales as Record<string, unknown>[]).map(mapSales));
-      setTaxInvoicesState((tax as Record<string, unknown>[]).map(mapTax));
-      setRiceProducts((products as Record<string, unknown>[]).map(mapProduct));
-      setInventory((inv as Record<string, unknown>[]).map(mapInventory));
+
+    // 1단계: 핵심 데이터 (매출, 세금, 상품, 재고) - 순차 로드로 DB 부하 분산
+    const sales = await salesApi.getAll().catch(() => []);
+    setSalesRecordsState((sales as Record<string, unknown>[]).map(mapSales));
+
+    const tax = await taxApi.getAll().catch(() => []);
+    setTaxInvoicesState((tax as Record<string, unknown>[]).map(mapTax));
+
+    const products = await productApi.getAll().catch(() => []);
+    setRiceProducts((products as Record<string, unknown>[]).map(mapProduct));
+
+    const inv = await inventoryApi.getAll().catch(() => []);
+    setInventory((inv as Record<string, unknown>[]).map(mapInventory));
+
+    setIsLoading(false); // 핵심 데이터 로드 완료 → 즉시 UI 표시
+
+    // 2단계: 보조 데이터 (재고이력, 거래처, 품목) - 비동기 백그라운드
+    Promise.all([
+      inventoryApi.getTransactions().catch(() => []),
+      customerApi.getAll().catch(() => []),
+      itemApi.getAll().catch(() => []),
+    ]).then(([invTx, custs, itms]) => {
       setInventoryTransactions((invTx as Record<string, unknown>[]).map(mapInvTx));
       setCustomers((custs as Record<string, unknown>[]).map(mapCustomer));
       setItems((itms as Record<string, unknown>[]).map(mapItem));
+    }).catch(err => console.error('보조 데이터 로드 오류:', err));
+
+    // 3단계: 소매/주문 데이터 - 완전 비동기 (탭 진입 시에도 별도 로드)
+    Promise.all([
+      retailCustomerApi.getAll().catch(() => []),
+      retailSaleApi.getAll().catch(() => []),
+    ]).then(([rCusts, rSales]) => {
       setRetailCustomers((rCusts as Record<string, unknown>[]).map(mapRetailCustomer));
       setRetailSales((rSales as Record<string, unknown>[]).map(mapRetailSale));
-      setShopProducts((sProds as Record<string, unknown>[]).map(mapShopProduct));
-      setOrders((ords as Record<string, unknown>[]).map(mapOrder));
-      if (oStats) setOrderStats(oStats as OrderStats);
-    } catch (err) {
-      console.error('데이터 로드 오류:', err);
-    }
-    setIsLoading(false);
+    }).catch(err => console.error('소매 데이터 로드 오류:', err));
+
+    // 4단계: 쇼핑몰/주문 데이터 - 가장 나중에 (대시보드 표시 후 로드)
+    setTimeout(() => {
+      Promise.all([
+        shopProductApi.getAll().catch(() => []),
+        orderApi.getAll().catch(() => []),
+        orderApi.getStats().catch(() => null),
+      ]).then(([sProds, ords, oStats]) => {
+        setShopProducts((sProds as Record<string, unknown>[]).map(mapShopProduct));
+        setOrders((ords as Record<string, unknown>[]).map(mapOrder));
+        if (oStats) setOrderStats(oStats as OrderStats);
+      }).catch(err => console.error('주문 데이터 로드 오류:', err));
+    }, 1000); // 1초 후 로드 (핵심 UI 렌더링 후)
   }, []);
 
   useEffect(() => { refreshAll(); }, [refreshAll]);

@@ -16,7 +16,18 @@ const crypto = require('crypto');
 // ──────────────────────────────────────────────────────
 const PORT = process.env.API_PORT || 4000;
 const DB_PATH = path.join(__dirname, 'data', 'rice.db');
-const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
+
+// JWT_SECRET: 서버 재시작해도 동일하게 유지 (파일에 저장)
+const SECRET_FILE = path.join(__dirname, 'data', '.jwt_secret');
+let JWT_SECRET;
+if (process.env.JWT_SECRET) {
+  JWT_SECRET = process.env.JWT_SECRET;
+} else if (fs.existsSync(SECRET_FILE)) {
+  JWT_SECRET = fs.readFileSync(SECRET_FILE, 'utf8').trim();
+} else {
+  JWT_SECRET = crypto.randomBytes(32).toString('hex');
+  fs.writeFileSync(SECRET_FILE, JWT_SECRET, { mode: 0o600 });
+}
 
 // 스토리지 제한 설정
 const STORAGE_LIMITS = {
@@ -36,6 +47,12 @@ if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
+db.pragma('synchronous = NORMAL');  // 성능 최적화
+db.pragma('cache_size = 10000');    // 캐시 증가
+db.pragma('temp_store = memory');   // 임시 저장소를 메모리로
+
+// WAL 체크포인트 - 시작 시 WAL 파일 정리
+try { db.pragma('wal_checkpoint(TRUNCATE)'); } catch(_) {}
 
 // 테이블 생성
 db.exec(`
@@ -252,8 +269,22 @@ db.exec(`
 `);
 
 // ──────────────────────────────────────────────────────
-// Express 앱
+// DB 마이그레이션 (기존 DB 컬럼 추가)
 // ──────────────────────────────────────────────────────
+const migrations = [
+  // sales_records 테이블 컬럼 추가 (기존 DB 호환)
+  `ALTER TABLE sales_records ADD COLUMN unit TEXT DEFAULT 'kg'`,
+  `ALTER TABLE sales_records ADD COLUMN transaction_type TEXT DEFAULT 'sale'`,
+  `ALTER TABLE sales_records ADD COLUMN customer_id TEXT`,
+  `ALTER TABLE sales_records ADD COLUMN item_id TEXT`,
+  // inventory 테이블 인덱스
+  `CREATE INDEX IF NOT EXISTS idx_inventory_user ON inventory(user_id)`,
+];
+for (const sql of migrations) {
+  try { db.exec(sql); } catch(_) { /* 이미 존재하면 무시 */ }
+}
+
+
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(cors({ origin: true, credentials: true }));
@@ -261,15 +292,27 @@ app.use(cors({ origin: true, credentials: true }));
 // ── Rate Limiting ──
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15분
-  max: 10,
+  max: 20,
   message: { error: '로그인 시도가 너무 많습니다. 15분 후 다시 시도해주세요.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => false,
 });
+// API rate limit: 매우 넉넉하게 설정 (분당 2000개)
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 200,
-  message: { error: '요청이 너무 많습니다.' },
+  max: 2000,
+  message: { error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // 주문 페이지, 상품 조회, orders API는 rate limit 제외
+  skip: (req) => {
+    const p = req.path;
+    return p === '/api/shop/orders' ||
+           p === '/api/shop/products' ||
+           p.startsWith('/api/orders') ||
+           p.startsWith('/api/shop/products/admin');
+  },
 });
 app.use('/api/', apiLimiter);
 
@@ -286,6 +329,14 @@ function authMiddleware(req, res, next) {
     return res.status(401).json({ error: '토큰이 유효하지 않습니다.' });
   }
 }
+
+// ── 전역 에러 핸들러 (서버 크래시 방지) ──
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err.message, err.stack);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[unhandledRejection]', reason);
+});
 
 // ── 스토리지 사용량 체크 헬퍼 ──
 function getStorageStats(userId) {
@@ -782,27 +833,36 @@ app.delete('/api/retail-sales/:id', authMiddleware, (req, res) => {
 
 // 공개 상품 목록 (인증 불필요 - 주문 페이지용)
 app.get('/api/shop/products', (req, res) => {
-  // user_id 파라미터로 특정 상점 상품 조회 (기본: 첫번째 사용자)
-  const { userId } = req.query;
-  let row;
-  if (userId) {
-    row = db.prepare('SELECT id FROM users WHERE id=?').get(userId);
-  } else {
-    row = db.prepare('SELECT id FROM users ORDER BY id LIMIT 1').get();
+  try {
+    const { userId } = req.query;
+    let row;
+    if (userId) {
+      row = db.prepare('SELECT id FROM users WHERE id=?').get(userId);
+    } else {
+      row = db.prepare('SELECT id FROM users ORDER BY id LIMIT 1').get();
+    }
+    if (!row) return res.json([]);
+    const products = db.prepare(
+      'SELECT * FROM shop_products WHERE user_id=? AND is_available=1 ORDER BY sort_order ASC, name ASC'
+    ).all(row.id);
+    res.json(products);
+  } catch(err) {
+    console.error('/api/shop/products error:', err.message);
+    res.status(500).json({ error: '상품 조회 실패' });
   }
-  if (!row) return res.json([]);
-  const products = db.prepare(
-    'SELECT * FROM shop_products WHERE user_id=? AND is_available=1 ORDER BY sort_order ASC, name ASC'
-  ).all(row.id);
-  res.json(products);
 });
 
 // 관리자용 전체 상품 목록 (인증 필요)
 app.get('/api/shop/products/admin', authMiddleware, (req, res) => {
-  const products = db.prepare(
-    'SELECT * FROM shop_products WHERE user_id=? ORDER BY sort_order ASC, name ASC'
-  ).all(req.user.id);
-  res.json(products);
+  try {
+    const products = db.prepare(
+      'SELECT * FROM shop_products WHERE user_id=? ORDER BY sort_order ASC, name ASC'
+    ).all(req.user.id);
+    res.json(products);
+  } catch(err) {
+    console.error('/api/shop/products/admin error:', err.message);
+    res.status(500).json({ error: '상품 목록 조회 실패' });
+  }
 });
 
 app.post('/api/shop/products', authMiddleware, (req, res) => {
@@ -833,32 +893,41 @@ app.delete('/api/shop/products/:id', authMiddleware, (req, res) => {
 
 // 주문 목록 (관리자용)
 app.get('/api/orders', authMiddleware, (req, res) => {
-  const { status, from, to, limit = 200 } = req.query;
-  let sql = 'SELECT * FROM orders WHERE user_id=?';
-  const params = [req.user.id];
-  if (status) { sql += ' AND status=?'; params.push(status); }
-  if (from) { sql += ' AND created_at>=?'; params.push(from); }
-  if (to) { sql += ' AND created_at<=?'; params.push(to + ' 23:59:59'); }
-  sql += ' ORDER BY created_at DESC LIMIT ?';
-  params.push(Number(limit));
-  const orders = db.prepare(sql).all(...params);
-  // 각 주문의 상품 목록 첨부
-  const result = orders.map(order => ({
-    ...order,
-    items: db.prepare('SELECT * FROM order_items WHERE order_id=?').all(order.id),
-  }));
-  res.json(result);
+  try {
+    const { status, from, to, limit = 200 } = req.query;
+    let sql = 'SELECT * FROM orders WHERE user_id=?';
+    const params = [req.user.id];
+    if (status) { sql += ' AND status=?'; params.push(status); }
+    if (from) { sql += ' AND created_at>=?'; params.push(from); }
+    if (to) { sql += ' AND created_at<=?'; params.push(to + ' 23:59:59'); }
+    sql += ' ORDER BY created_at DESC LIMIT ?';
+    params.push(Number(limit));
+    const orders = db.prepare(sql).all(...params);
+    const result = orders.map(order => ({
+      ...order,
+      items: db.prepare('SELECT * FROM order_items WHERE order_id=?').all(order.id),
+    }));
+    res.json(result);
+  } catch(err) {
+    console.error('/api/orders error:', err.message);
+    res.status(500).json({ error: '주문 목록 조회 실패' });
+  }
 });
 
 // 주문 통계 (관리자용)
 app.get('/api/orders/stats', authMiddleware, (req, res) => {
-  const today = new Date().toISOString().slice(0, 10);
-  const todayCount = db.prepare("SELECT COUNT(*) as c FROM orders WHERE user_id=? AND date(created_at)=?").get(req.user.id, today).c;
-  const todayAmount = db.prepare("SELECT COALESCE(SUM(total_amount),0) as s FROM orders WHERE user_id=? AND date(created_at)=?").get(req.user.id, today).s;
-  const pendingCount = db.prepare("SELECT COUNT(*) as c FROM orders WHERE user_id=? AND status='pending'").get(req.user.id).c;
-  const totalCount = db.prepare('SELECT COUNT(*) as c FROM orders WHERE user_id=?').get(req.user.id).c;
-  const totalAmount = db.prepare('SELECT COALESCE(SUM(total_amount),0) as s FROM orders WHERE user_id=?').get(req.user.id).s;
-  res.json({ todayCount, todayAmount, pendingCount, totalCount, totalAmount });
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const todayCount = db.prepare("SELECT COUNT(*) as c FROM orders WHERE user_id=? AND date(created_at)=?").get(req.user.id, today).c;
+    const todayAmount = db.prepare("SELECT COALESCE(SUM(total_amount),0) as s FROM orders WHERE user_id=? AND date(created_at)=?").get(req.user.id, today).s;
+    const pendingCount = db.prepare("SELECT COUNT(*) as c FROM orders WHERE user_id=? AND status='pending'").get(req.user.id).c;
+    const totalCount = db.prepare('SELECT COUNT(*) as c FROM orders WHERE user_id=?').get(req.user.id).c;
+    const totalAmount = db.prepare('SELECT COALESCE(SUM(total_amount),0) as s FROM orders WHERE user_id=?').get(req.user.id).s;
+    res.json({ todayCount, todayAmount, pendingCount, totalCount, totalAmount });
+  } catch(err) {
+    console.error('/api/orders/stats error:', err.message);
+    res.status(500).json({ error: '주문 통계 조회 실패' });
+  }
 });
 
 // 비회원 주문 생성 (인증 불필요 - 주문 페이지용)
