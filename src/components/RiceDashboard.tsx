@@ -1,4 +1,4 @@
-// 쌀집 대시보드 메인 레이아웃 (인증 포함)
+// 태평농산 대시보드 — 브랜드 리뉴얼
 import React, { useState, useMemo } from 'react';
 import { useRice } from '@/contexts/RiceContext';
 import SalesPage from '@/pages/SalesPage';
@@ -13,31 +13,57 @@ import OrderManagePage from '@/pages/OrderManagePage';
 import {
   TrendingUp, DollarSign, Package, FileText, Bell, Menu, X,
   BarChart2, ShoppingCart, AlertTriangle, ChevronRight, Settings, Loader2,
-  Building2, Users, Clock, Crown, Star, Heart, Store, ClipboardList
+  Building2, Users, Clock, Crown, Star, Heart, Store, ClipboardList, Leaf,
+  ArrowUpRight, ArrowDownRight, Wheat
 } from 'lucide-react';
 
 const formatKRW = (v: number) => `₩${v.toLocaleString('ko-KR')}`;
 
+// ── 태평농산 색상 팔레트 ──────────────────────────────────────
+const C = {
+  // 배경
+  bg:         '#0f1a12',   // 딥 다크 그린
+  surface:    '#172015',   // 카드 배경
+  surfaceHov: '#1e2a1a',   // 카드 호버
+  border:     '#253320',   // 테두리
+  borderHov:  '#3a5030',   // 호버 테두리
+  // 브랜드
+  green:      '#2d9e4e',   // 메인 그린
+  greenLight: '#3db866',   // 밝은 그린
+  greenGlow:  'rgba(45,158,78,0.15)',
+  gold:       '#c8a951',   // 골드
+  goldLight:  '#f0c96a',
+  goldGlow:   'rgba(200,169,81,0.15)',
+  orange:     '#e8621a',
+  // 텍스트
+  textPri:    '#f0f4ee',   // 주요 텍스트
+  textSec:    '#8aad80',   // 보조 텍스트
+  textMute:   '#4a6b42',   // 뮤트 텍스트
+  // 상태색
+  red:        '#f87171',
+  yellow:     '#fbbf24',
+  blue:       '#60a5fa',
+  pink:       '#f472b6',
+};
+
+const LOGO_IMAGE = 'https://www.genspark.ai/api/files/s/QTqN4PyP?cache_control=3600';
+
 type TabId = 'overview' | 'master' | 'sales' | 'profit' | 'inventory' | 'tax' | 'retail' | 'shop' | 'orders' | 'settings';
 
-const TABS: { id: TabId; label: string; icon: React.ElementType; color: string }[] = [
-  { id: 'overview',  label: '홈',        icon: BarChart2,     color: '#00d9ff' },
-  { id: 'master',    label: '기초데이터', icon: Building2,     color: '#a78bfa' },
-  { id: 'sales',     label: '매출 관리',  icon: TrendingUp,    color: '#00d9ff' },
-  { id: 'profit',    label: '순이익',     icon: DollarSign,    color: '#10b981' },
-  { id: 'inventory', label: '재고 현황',  icon: Package,       color: '#f59e0b' },
-  { id: 'tax',       label: '세금계산서', icon: FileText,      color: '#7c3aed' },
-  { id: 'retail',    label: '단골 고객',  icon: Heart,         color: '#f472b6' },
-  { id: 'shop',      label: '상품 관리',  icon: Store,         color: '#34d399' },
-  { id: 'orders',    label: '주문 관리',  icon: ClipboardList, color: '#fb923c' },
-  { id: 'settings',  label: '설정',       icon: Settings,      color: '#6b7280' },
+const TABS: { id: TabId; label: string; icon: React.ElementType; color: string; group?: string }[] = [
+  { id: 'overview',  label: '홈',        icon: BarChart2,     color: C.green,   group: '대시보드' },
+  { id: 'sales',     label: '매출 관리',  icon: TrendingUp,    color: C.blue,    group: '운영관리' },
+  { id: 'profit',    label: '순이익',     icon: DollarSign,    color: C.green,   group: '운영관리' },
+  { id: 'inventory', label: '재고 현황',  icon: Package,       color: C.yellow,  group: '운영관리' },
+  { id: 'tax',       label: '세금계산서', icon: FileText,      color: '#a78bfa', group: '운영관리' },
+  { id: 'retail',    label: '단골 고객',  icon: Heart,         color: C.pink,    group: '고객관리' },
+  { id: 'shop',      label: '상품 관리',  icon: Store,         color: C.green,   group: '쇼핑몰' },
+  { id: 'orders',    label: '주문 관리',  icon: ClipboardList, color: C.orange,  group: '쇼핑몰' },
+  { id: 'master',    label: '기초데이터', icon: Building2,     color: '#a78bfa', group: '설정' },
+  { id: 'settings',  label: '설정',       icon: Settings,      color: C.textSec, group: '설정' },
 ];
 
-interface Props {
-  username: string;
-  displayName: string;
-  onLogout: () => void;
-}
+interface Props { username: string; displayName: string; onLogout: () => void; }
 
 export default function RiceDashboard({ username, displayName, onLogout }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
@@ -47,7 +73,6 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
     customers, items, retailCustomers, retailSales, orders, isLoading
   } = useRice();
 
-  // 이번달 통계
   const thisMonth = useMemo(() => {
     const d = new Date();
     const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -65,8 +90,7 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
     const nextMonth = d.getMonth() === 11
       ? `${d.getFullYear() + 1}-01`
       : `${d.getFullYear()}-${String(d.getMonth() + 2).padStart(2, '0')}`;
-    const rangeStart = `${ym}-01`;
-    const rangeEnd = `${nextMonth}-15`;
+    const rangeStart = `${ym}-01`, rangeEnd = `${nextMonth}-15`;
     const invoicedCompanies = new Set(
       taxInvoices.filter(i => i.issueDate >= rangeStart && i.issueDate <= rangeEnd).map(i => i.companyName.trim())
     );
@@ -84,131 +108,123 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
   const revenueChange = lastMonth > 0 ? ((thisMonth.revenue - lastMonth) / lastMonth) * 100 : 0;
   const lowStockItems = inventory.filter(i => i.currentStock < 5 && i.currentStock >= 0);
 
-  // 재구매 유도 대상 단골 (30일 이상 미구매)
   const retailReminderCount = useMemo(() => {
     const lastPurchase: Record<string, string> = {};
     retailSales.forEach(s => {
-      if (!lastPurchase[s.customerId] || s.date > lastPurchase[s.customerId]) {
-        lastPurchase[s.customerId] = s.date;
-      }
+      if (!lastPurchase[s.customerId] || s.date > lastPurchase[s.customerId]) lastPurchase[s.customerId] = s.date;
     });
     return retailCustomers.filter(c => {
       const last = lastPurchase[c.id];
       if (!last) return false;
-      const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
-      return days >= 30;
+      return Math.floor((Date.now() - new Date(last).getTime()) / 86400000) >= 30;
     }).length;
   }, [retailCustomers, retailSales]);
 
-  // 대기 중인 주문 수
   const pendingOrderCount = useMemo(() => orders.filter(o => o.status === 'pending').length, [orders]);
 
-  // 로딩 스피너
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#1a1d29] flex items-center justify-center flex-col gap-4">
-        <Loader2 className="animate-spin text-[#00d9ff]" size={48} />
-        <p className="text-gray-400">데이터를 불러오는 중...</p>
+  // ─── 로딩 화면 ──────────────────────────────────────────
+  if (isLoading) return (
+    <div style={{ minHeight:'100vh', background:C.bg, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:20, fontFamily:'"Noto Sans KR",sans-serif' }}>
+      <div style={{ width:80, height:80, borderRadius:'50%', background:`linear-gradient(135deg,${C.green},${C.gold})`, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:`0 0 40px ${C.greenGlow}` }}>
+        <Wheat size={40} color='#fff' />
       </div>
-    );
-  }
+      <Loader2 size={28} color={C.green} style={{ animation:'spin 1s linear infinite' }} />
+      <p style={{ color:C.textSec, fontSize:15 }}>태평농산 데이터를 불러오는 중...</p>
+      <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
 
+  // ─── 메인 대시보드 ──────────────────────────────────────
   const OverviewPage = () => (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-white mb-1">안녕하세요, {displayName}님! 👋</h2>
-        <p className="text-gray-400 text-sm">{thisMonth.ym.replace('-', '년 ')}월 현황을 확인하세요</p>
+    <div style={{ display:'flex', flexDirection:'column', gap:24 }}>
+      {/* 헤더 인사말 */}
+      <div style={{ padding:'28px 28px 24px', background:`linear-gradient(135deg,${C.surface},${C.surfaceHov})`, borderRadius:20, border:`1px solid ${C.border}`, position:'relative', overflow:'hidden' }}>
+        <div style={{ position:'absolute', right:20, top:'50%', transform:'translateY(-50%)', opacity:0.06, fontSize:120, lineHeight:1 }}>🌾</div>
+        <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:4 }}>
+          <div style={{ width:48, height:48, borderRadius:14, background:`linear-gradient(135deg,${C.green},${C.gold})`, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', flexShrink:0 }}>
+            <img src={LOGO_IMAGE} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={e=>{(e.currentTarget as HTMLImageElement).style.display='none';}} />
+          </div>
+          <div>
+            <h2 style={{ color:C.textPri, fontWeight:700, fontSize:22, margin:'0 0 4px', letterSpacing:-0.5 }}>
+              안녕하세요, {displayName}님! 👋
+            </h2>
+            <p style={{ color:C.textSec, fontSize:13, margin:0 }}>
+              태평농산 {thisMonth.ym.replace('-', '년 ')}월 현황
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* 주요 지표 */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        {[
-          {
-            label: '이번달 매출', value: formatKRW(thisMonth.revenue),
-            sub: revenueChange !== 0 ? `전월 대비 ${revenueChange > 0 ? '+' : ''}${revenueChange.toFixed(1)}%` : '전월 데이터 없음',
-            subColor: revenueChange >= 0 ? 'text-green-400' : 'text-red-400',
-            color: '#00d9ff', icon: TrendingUp, onClick: () => setActiveTab('sales'),
-          },
-          {
-            label: '이번달 순이익', value: formatKRW(thisMonth.profit),
-            sub: thisMonth.revenue > 0 ? `이익률 ${((thisMonth.profit / thisMonth.revenue) * 100).toFixed(1)}%` : '-',
-            subColor: thisMonth.profit >= 0 ? 'text-green-400' : 'text-red-400',
-            color: '#10b981', icon: DollarSign, onClick: () => setActiveTab('profit'),
-          },
-          {
-            label: '거래 업체수', value: `${thisMonth.companies}개사`,
-            sub: `총 ${salesRecords.length.toLocaleString()}건 매출`,
-            subColor: 'text-gray-400', color: '#f59e0b', icon: ShoppingCart, onClick: () => setActiveTab('sales'),
-          },
-          {
-            label: '세금계산서 미발행', value: `${thisMonth.unissuedCount}개사`,
-            sub: thisMonth.unissuedCount > 0 ? '⚠️ 확인 필요' : '✅ 모두 발행됨',
-            subColor: thisMonth.unissuedCount > 0 ? 'text-red-400' : 'text-green-400',
-            color: thisMonth.unissuedCount > 0 ? '#ef4444' : '#10b981', icon: FileText, onClick: () => setActiveTab('tax'),
-          },
-          {
-            label: '대기 주문', value: `${pendingOrderCount}건`,
-            sub: orders.length > 0 ? `총 ${orders.length}건 접수` : '주문 없음',
-            subColor: pendingOrderCount > 0 ? 'text-orange-400' : 'text-gray-400',
-            color: pendingOrderCount > 0 ? '#fb923c' : '#6b7280', icon: ClipboardList, onClick: () => setActiveTab('orders'),
-          },
-        ].map((card, i) => (
-          <div key={i} onClick={card.onClick}
-            className="bg-[#2d3142] rounded-xl p-4 border border-[#3d4362] cursor-pointer hover:border-[#4d5382] transition-all hover:scale-[1.02] group"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-gray-400 text-xs">{card.label}</span>
-              <div className="flex items-center gap-1">
-                <card.icon size={16} style={{ color: card.color }} />
-                <ChevronRight size={12} className="text-gray-600 group-hover:text-gray-400 transition-colors" />
+      {/* 주요 지표 카드 */}
+      <div>
+        <h3 style={{ color:C.textSec, fontSize:12, fontWeight:600, letterSpacing:1, textTransform:'uppercase', margin:'0 0 12px', display:'flex', alignItems:'center', gap:6 }}>
+          <span style={{ width:3, height:14, background:C.green, borderRadius:2, display:'inline-block' }} /> 이번달 핵심 지표
+        </h3>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:12 }} className="dashboard-metrics">
+          {[
+            { label:'이번달 매출', value:formatKRW(thisMonth.revenue), sub: revenueChange !== 0 ? `전월 대비 ${revenueChange > 0 ? '+' : ''}${revenueChange.toFixed(1)}%` : '전월 데이터 없음', up: revenueChange >= 0, color:C.green, icon:TrendingUp, onClick:()=>setActiveTab('sales') },
+            { label:'이번달 순이익', value:formatKRW(thisMonth.profit), sub: thisMonth.revenue > 0 ? `이익률 ${((thisMonth.profit/thisMonth.revenue)*100).toFixed(1)}%` : '-', up: thisMonth.profit >= 0, color:C.gold, icon:DollarSign, onClick:()=>setActiveTab('profit') },
+            { label:'거래 업체수', value:`${thisMonth.companies}개사`, sub:`총 ${salesRecords.length.toLocaleString()}건`, up: true, color:C.blue, icon:ShoppingCart, onClick:()=>setActiveTab('sales') },
+            { label:'세금계산서 미발행', value:`${thisMonth.unissuedCount}개사`, sub: thisMonth.unissuedCount > 0 ? '⚠️ 확인 필요' : '✅ 모두 발행', up: thisMonth.unissuedCount === 0, color: thisMonth.unissuedCount > 0 ? C.red : C.green, icon:FileText, onClick:()=>setActiveTab('tax') },
+            { label:'대기 주문', value:`${pendingOrderCount}건`, sub: orders.length > 0 ? `총 ${orders.length}건 접수` : '주문 없음', up: pendingOrderCount === 0, color: pendingOrderCount > 0 ? C.orange : C.textSec, icon:ClipboardList, onClick:()=>setActiveTab('orders') },
+          ].map((card, i) => (
+            <div key={i} onClick={card.onClick}
+              style={{ background:C.surface, borderRadius:16, padding:'16px', border:`1px solid ${C.border}`, cursor:'pointer', transition:'all 0.2s', position:'relative', overflow:'hidden' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = card.color + '60'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = `0 8px 24px ${card.color}20`; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = C.border; (e.currentTarget as HTMLDivElement).style.transform = ''; (e.currentTarget as HTMLDivElement).style.boxShadow = ''; }}
+            >
+              <div style={{ position:'absolute', right:12, top:12, width:36, height:36, borderRadius:10, background:`${card.color}15`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <card.icon size={18} color={card.color} />
+              </div>
+              <p style={{ color:C.textSec, fontSize:11, fontWeight:500, margin:'0 0 8px', letterSpacing:0.3 }}>{card.label}</p>
+              <p style={{ color:card.color, fontWeight:800, fontSize:20, margin:'0 0 6px', letterSpacing:-0.5 }}>{card.value}</p>
+              <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                {card.up ? <ArrowUpRight size={12} color={C.green} /> : <ArrowDownRight size={12} color={C.red} />}
+                <span style={{ fontSize:11, color: card.up ? C.green : C.red }}>{card.sub}</span>
               </div>
             </div>
-            <div className="font-bold text-xl mb-1" style={{ color: card.color }}>{card.value}</div>
-            <div className={`text-xs ${card.subColor}`}>{card.sub}</div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      {/* 단골 고객 현황 카드 */}
+      {/* 단골 고객 현황 */}
       {retailCustomers.length > 0 && (
-        <div className="bg-[#2d3142] rounded-xl p-4 border border-[#3d4362]">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-white font-semibold flex items-center gap-2">
-              <Heart size={16} className="text-pink-400" />
-              단골 고객 현황
+        <div style={{ background:C.surface, borderRadius:16, padding:'18px 20px', border:`1px solid ${C.border}` }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+            <h3 style={{ color:C.textPri, fontWeight:600, fontSize:14, margin:0, display:'flex', alignItems:'center', gap:8 }}>
+              <Heart size={16} color={C.pink} /> 단골 고객 현황
             </h3>
-            <button onClick={() => setActiveTab('retail')}
-              className="text-pink-400 text-xs hover:text-pink-300 flex items-center gap-1 transition-colors">
-              자세히 보기 <ChevronRight size={12} />
+            <button onClick={() => setActiveTab('retail')} style={{ color:C.pink, fontSize:12, background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:4 }}>
+              자세히 <ChevronRight size={12} />
             </button>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:10 }}>
             {[
-              { label: '전체 고객', value: `${retailCustomers.length}명`, icon: Users, color: 'text-pink-400' },
-              { label: 'VIP 고객', value: `${retailCustomers.filter(c => c.grade === 'vip').length}명`, icon: Crown, color: 'text-yellow-400' },
-              { label: '이달 판매', value: `${retailSales.filter(s => s.date.startsWith(thisMonth.ym)).length}건`, icon: ShoppingCart, color: 'text-[#00d9ff]' },
-              { label: '재구매 유도', value: `${retailReminderCount}명`, icon: Clock, color: retailReminderCount > 0 ? 'text-yellow-400' : 'text-gray-500' },
+              { label:'전체 고객', value:`${retailCustomers.length}명`, icon:Users, color:C.pink },
+              { label:'VIP 고객', value:`${retailCustomers.filter(c=>c.grade==='vip').length}명`, icon:Crown, color:C.gold },
+              { label:'이달 판매', value:`${retailSales.filter(s=>s.date.startsWith(thisMonth.ym)).length}건`, icon:ShoppingCart, color:C.blue },
+              { label:'재구매 유도', value:`${retailReminderCount}명`, icon:Clock, color: retailReminderCount > 0 ? C.yellow : C.textMute },
             ].map(card => (
               <div key={card.label} onClick={() => setActiveTab('retail')}
-                className="bg-[#1a1d29] rounded-lg p-3 cursor-pointer hover:bg-[#3d4362]/30 transition-colors">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <card.icon size={13} className={card.color} />
-                  <span className="text-gray-400 text-xs">{card.label}</span>
+                style={{ background:C.bg, borderRadius:12, padding:'12px', cursor:'pointer', border:`1px solid ${C.border}`, transition:'background 0.2s' }}
+                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = C.surfaceHov}
+                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = C.bg}
+              >
+                <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:6 }}>
+                  <card.icon size={13} color={card.color} />
+                  <span style={{ color:C.textSec, fontSize:11 }}>{card.label}</span>
                 </div>
-                <div className={`font-bold text-lg ${card.color}`}>{card.value}</div>
+                <p style={{ color:card.color, fontWeight:700, fontSize:18, margin:0 }}>{card.value}</p>
               </div>
             ))}
           </div>
           {retailReminderCount > 0 && (
-            <div className="mt-3 flex items-center gap-2 p-2.5 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-              <Clock size={13} className="text-yellow-400 flex-shrink-0" />
-              <p className="text-yellow-300 text-xs">
-                <strong>{retailReminderCount}명</strong>의 단골 고객이 30일 이상 구매하지 않았습니다.
+            <div style={{ marginTop:12, display:'flex', alignItems:'center', gap:8, padding:'10px 14px', background:'rgba(251,191,36,0.08)', border:'1px solid rgba(251,191,36,0.2)', borderRadius:10 }}>
+              <Clock size={13} color={C.yellow} />
+              <p style={{ color:C.yellow, fontSize:12, margin:0, flex:1 }}>
+                <strong>{retailReminderCount}명</strong>의 단골 고객이 30일 이상 미구매
               </p>
-              <button onClick={() => setActiveTab('retail')}
-                className="ml-auto text-yellow-400 text-xs hover:text-yellow-300 whitespace-nowrap flex items-center gap-0.5">
-                연락하기 <ChevronRight size={11} />
-              </button>
+              <button onClick={() => setActiveTab('retail')} style={{ color:C.yellow, fontSize:11, background:'none', border:'none', cursor:'pointer', whiteSpace:'nowrap' }}>연락하기 →</button>
             </div>
           )}
         </div>
@@ -216,244 +232,318 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
 
       {/* 경고 알림 */}
       {(lowStockItems.length > 0 || thisMonth.unissuedCount > 0 || pendingOrderCount > 0) && (
-        <div className="space-y-2">
-          <h3 className="text-white font-semibold flex items-center gap-2">
-            <AlertTriangle size={18} className="text-yellow-400" />
-            주의 사항
+        <div>
+          <h3 style={{ color:C.textSec, fontSize:12, fontWeight:600, letterSpacing:1, textTransform:'uppercase', margin:'0 0 12px', display:'flex', alignItems:'center', gap:6 }}>
+            <AlertTriangle size={13} color={C.yellow} /> 주의 사항
           </h3>
-          {pendingOrderCount > 0 && (
-            <div className="flex items-center justify-between p-4 bg-orange-500/10 border border-orange-500/30 rounded-xl cursor-pointer hover:bg-orange-500/15 transition-colors"
-              onClick={() => setActiveTab('orders')}>
-              <div className="flex items-center gap-3">
-                <ClipboardList size={18} className="text-orange-400" />
-                <div>
-                  <p className="text-white text-sm font-medium">대기 중인 주문 {pendingOrderCount}건</p>
-                  <p className="text-gray-400 text-xs">처리가 필요합니다</p>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {pendingOrderCount > 0 && (
+              <div onClick={() => setActiveTab('orders')}
+                style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', background:'rgba(232,98,26,0.08)', border:'1px solid rgba(232,98,26,0.25)', borderRadius:12, cursor:'pointer', transition:'background 0.2s' }}
+                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = 'rgba(232,98,26,0.14)'}
+                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'rgba(232,98,26,0.08)'}
+              >
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <ClipboardList size={18} color={C.orange} />
+                  <div>
+                    <p style={{ color:C.textPri, fontSize:13, fontWeight:600, margin:'0 0 2px' }}>대기 중인 주문 {pendingOrderCount}건</p>
+                    <p style={{ color:C.textSec, fontSize:11, margin:0 }}>처리가 필요합니다</p>
+                  </div>
                 </div>
+                <ChevronRight size={16} color={C.orange} />
               </div>
-              <ChevronRight size={16} className="text-orange-400" />
-            </div>
-          )}
-          {thisMonth.unissuedCount > 0 && (
-            <div className="flex items-center justify-between p-4 bg-red-500/10 border border-red-500/30 rounded-xl cursor-pointer hover:bg-red-500/15 transition-colors"
-              onClick={() => setActiveTab('tax')}>
-              <div className="flex items-center gap-3">
-                <FileText size={18} className="text-red-400" />
-                <div>
-                  <p className="text-white text-sm font-medium">세금계산서 미발행 업체 {thisMonth.unissuedCount}개사</p>
-                  <p className="text-gray-400 text-xs">{thisMonth.ym.replace('-', '년 ')}월 기준</p>
+            )}
+            {thisMonth.unissuedCount > 0 && (
+              <div onClick={() => setActiveTab('tax')}
+                style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', background:'rgba(248,113,113,0.08)', border:'1px solid rgba(248,113,113,0.25)', borderRadius:12, cursor:'pointer', transition:'background 0.2s' }}
+                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = 'rgba(248,113,113,0.14)'}
+                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'rgba(248,113,113,0.08)'}
+              >
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <FileText size={18} color={C.red} />
+                  <div>
+                    <p style={{ color:C.textPri, fontSize:13, fontWeight:600, margin:'0 0 2px' }}>세금계산서 미발행 {thisMonth.unissuedCount}개사</p>
+                    <p style={{ color:C.textSec, fontSize:11, margin:0 }}>{thisMonth.ym.replace('-', '년 ')}월 기준</p>
+                  </div>
                 </div>
+                <ChevronRight size={16} color={C.red} />
               </div>
-              <ChevronRight size={16} className="text-red-400" />
-            </div>
-          )}
-          {lowStockItems.map(item => (
-            <div key={item.id} className="flex items-center justify-between p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl cursor-pointer hover:bg-yellow-500/15 transition-colors"
-              onClick={() => setActiveTab('inventory')}>
-              <div className="flex items-center gap-3">
-                <Package size={18} className="text-yellow-400" />
-                <div>
-                  <p className="text-white text-sm font-medium">{item.productName} 재고 부족</p>
-                  <p className="text-gray-400 text-xs">현재 {item.currentStock.toFixed(1)}포대 ({Math.round(item.currentStockKg)}kg)</p>
+            )}
+            {lowStockItems.map(item => (
+              <div key={item.id} onClick={() => setActiveTab('inventory')}
+                style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', background:'rgba(251,191,36,0.08)', border:'1px solid rgba(251,191,36,0.25)', borderRadius:12, cursor:'pointer', transition:'background 0.2s' }}
+                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = 'rgba(251,191,36,0.14)'}
+                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'rgba(251,191,36,0.08)'}
+              >
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <Package size={18} color={C.yellow} />
+                  <div>
+                    <p style={{ color:C.textPri, fontSize:13, fontWeight:600, margin:'0 0 2px' }}>{item.productName} 재고 부족</p>
+                    <p style={{ color:C.textSec, fontSize:11, margin:0 }}>현재 {item.currentStock.toFixed(1)}포대 ({Math.round(item.currentStockKg)}kg)</p>
+                  </div>
                 </div>
-              </div>
-              <ChevronRight size={16} className="text-yellow-400" />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* 기초데이터 현황 */}
-      {(customers.length > 0 || items.length > 0) && (
-        <div className="grid grid-cols-2 gap-3">
-          <div onClick={() => setActiveTab('master')}
-            className="bg-[#2d3142] rounded-xl p-4 border border-[#3d4362] cursor-pointer hover:border-[#a78bfa]/50 transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-400 text-xs">등록 거래처</span>
-              <Building2 size={15} className="text-[#a78bfa]" />
-            </div>
-            <div className="text-[#a78bfa] font-bold text-xl">{customers.length}개사</div>
-          </div>
-          <div onClick={() => setActiveTab('master')}
-            className="bg-[#2d3142] rounded-xl p-4 border border-[#3d4362] cursor-pointer hover:border-[#a78bfa]/50 transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-400 text-xs">등록 품목</span>
-              <Package size={15} className="text-[#a78bfa]" />
-            </div>
-            <div className="text-[#a78bfa] font-bold text-xl">{items.length}개</div>
-          </div>
-        </div>
-      )}
-
-      {/* 빠른 이동 */}
-      <div>
-        <h3 className="text-white font-semibold mb-3">빠른 이동</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {TABS.filter(t => t.id !== 'overview' && t.id !== 'settings').map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className="flex flex-col items-center gap-3 p-4 bg-[#2d3142] hover:bg-[#3d4362] border border-[#3d4362] rounded-xl transition-all hover:scale-[1.02]">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: `${tab.color}20` }}>
-                <tab.icon size={20} style={{ color: tab.color }} />
-              </div>
-              <span className="text-white text-xs font-medium">{tab.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {salesRecords.length === 0 && (
-        <div className="bg-[#2d3142] border border-[#3d4362] rounded-xl p-6">
-          <h3 className="text-white font-semibold mb-4">🚀 시작하기</h3>
-          <div className="space-y-3">
-            {[
-              { step: '1', text: '기초데이터 탭에서 거래처와 품목을 먼저 등록하세요', tab: 'master' as TabId },
-              { step: '2', text: '순이익 탭에서 취급 품목(쌀 종류)과 원가를 등록하세요', tab: 'profit' as TabId },
-              { step: '3', text: '매출 관리 탭에서 CSV 업로드 또는 직접 입력하세요', tab: 'sales' as TabId },
-              { step: '4', text: '재고 현황 탭에서 현재 재고를 설정하세요', tab: 'inventory' as TabId },
-              { step: '5', text: '단골 고객 탭에서 소매 고객을 등록하고 구매 이력을 관리하세요', tab: 'retail' as TabId },
-              { step: '6', text: '상품 관리 탭에서 주문 페이지에 표시할 상품을 등록하세요', tab: 'shop' as TabId },
-            ].map(item => (
-              <div key={item.step} onClick={() => setActiveTab(item.tab)}
-                className="flex items-start gap-3 p-3 rounded-lg hover:bg-[#3d4362] cursor-pointer transition-colors group">
-                <div className="w-6 h-6 rounded-full bg-[#00d9ff] text-[#1a1d29] font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
-                  {item.step}
-                </div>
-                <span className="text-gray-300 text-sm group-hover:text-white transition-colors">{item.text}</span>
+                <ChevronRight size={16} color={C.yellow} />
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* 기초데이터 */}
+      {(customers.length > 0 || items.length > 0) && (
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:12 }}>
+          {[
+            { label:'등록 거래처', value:`${customers.length}개사`, icon:Building2, color:'#a78bfa' },
+            { label:'등록 품목', value:`${items.length}개`, icon:Package, color:'#a78bfa' },
+          ].map(card => (
+            <div key={card.label} onClick={() => setActiveTab('master')}
+              style={{ background:C.surface, borderRadius:14, padding:'14px 16px', border:`1px solid ${C.border}`, cursor:'pointer', transition:'all 0.2s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = card.color + '50'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = C.border; }}
+            >
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
+                <span style={{ color:C.textSec, fontSize:11 }}>{card.label}</span>
+                <card.icon size={15} color={card.color} />
+              </div>
+              <p style={{ color:card.color, fontWeight:700, fontSize:20, margin:0 }}>{card.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 빠른 이동 */}
+      <div>
+        <h3 style={{ color:C.textSec, fontSize:12, fontWeight:600, letterSpacing:1, textTransform:'uppercase', margin:'0 0 12px', display:'flex', alignItems:'center', gap:6 }}>
+          <span style={{ width:3, height:14, background:C.gold, borderRadius:2, display:'inline-block' }} /> 빠른 이동
+        </h3>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10 }} className="quick-nav">
+          {TABS.filter(t => t.id !== 'overview' && t.id !== 'settings').map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, padding:'14px 8px', background:C.surface, border:`1px solid ${C.border}`, borderRadius:14, cursor:'pointer', transition:'all 0.2s', color:C.textPri, fontFamily:'inherit' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = C.surfaceHov; (e.currentTarget as HTMLButtonElement).style.borderColor = tab.color + '50'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = C.surface; (e.currentTarget as HTMLButtonElement).style.borderColor = C.border; (e.currentTarget as HTMLButtonElement).style.transform = ''; }}
+            >
+              <div style={{ width:40, height:40, borderRadius:12, background:`${tab.color}18`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <tab.icon size={19} color={tab.color} />
+              </div>
+              <span style={{ fontSize:11, fontWeight:600, color:C.textSec }}>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 시작 가이드 */}
+      {salesRecords.length === 0 && (
+        <div style={{ background:C.surface, borderRadius:16, padding:'22px 24px', border:`1px solid ${C.border}` }}>
+          <h3 style={{ color:C.textPri, fontWeight:700, fontSize:16, margin:'0 0 16px', display:'flex', alignItems:'center', gap:8 }}>
+            <span style={{ fontSize:20 }}>🚀</span> 태평농산 대시보드 시작하기
+          </h3>
+          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            {[
+              { step:'1', text:'기초데이터 탭에서 거래처와 품목을 먼저 등록하세요', tab:'master' as TabId },
+              { step:'2', text:'순이익 탭에서 취급 품목(쌀 종류)과 원가를 등록하세요', tab:'profit' as TabId },
+              { step:'3', text:'매출 관리 탭에서 CSV 업로드 또는 직접 입력하세요', tab:'sales' as TabId },
+              { step:'4', text:'재고 현황 탭에서 현재 재고를 설정하세요', tab:'inventory' as TabId },
+              { step:'5', text:'단골 고객 탭에서 소매 고객을 등록하고 구매 이력을 관리하세요', tab:'retail' as TabId },
+              { step:'6', text:'상품 관리 탭에서 주문 페이지에 표시할 상품을 등록하세요', tab:'shop' as TabId },
+            ].map(item => (
+              <div key={item.step} onClick={() => setActiveTab(item.tab)}
+                style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'10px 12px', borderRadius:10, cursor:'pointer', transition:'background 0.2s' }}
+                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = C.surfaceHov}
+                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}
+              >
+                <div style={{ width:24, height:24, borderRadius:'50%', background:`linear-gradient(135deg,${C.green},${C.gold})`, color:'#fff', fontWeight:700, fontSize:11, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:1 }}>
+                  {item.step}
+                </div>
+                <span style={{ color:C.textSec, fontSize:13, lineHeight:1.5 }}>{item.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 하단 반응형 그리드 CSS 지원 */}
+      <style>{`
+        @media(min-width:640px) {
+          .dashboard-metrics { grid-template-columns: repeat(3,1fr) !important; }
+          .quick-nav { grid-template-columns: repeat(4,1fr) !important; }
+        }
+        @media(min-width:1024px) {
+          .dashboard-metrics { grid-template-columns: repeat(5,1fr) !important; }
+          .quick-nav { grid-template-columns: repeat(5,1fr) !important; }
+        }
+      `}</style>
     </div>
   );
 
+  // ─── 레이아웃 ────────────────────────────────────────────
+  const groups = [...new Set(TABS.map(t => t.group))];
+
   return (
-    <div className="min-h-screen bg-[#1a1d29] flex">
+    <div style={{ minHeight:'100vh', background:C.bg, display:'flex', fontFamily:'"Noto Sans KR",Apple SD Gothic Neo,sans-serif', color:C.textPri }}>
+      <style>{`
+        * { box-sizing: border-box; }
+        body { margin: 0; }
+        @keyframes spin { from{transform:rotate(0)}to{transform:rotate(360deg)} }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: ${C.bg}; }
+        ::-webkit-scrollbar-thumb { background: ${C.border}; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: ${C.green}; }
+      `}</style>
+
+      {/* 사이드바 오버레이 (모바일) */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.65)', zIndex:30 }} onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* 사이드바 */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-60 bg-[#2d3142] border-r border-[#3d4362] flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="p-5 border-b border-[#3d4362]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00d9ff] to-[#7c3aed] flex items-center justify-center text-lg flex-shrink-0">
-                🌾
+      {/* ── 사이드바 ── */}
+      <aside style={{
+        position: 'fixed', top:0, left:0, bottom:0, zIndex:40, width:228,
+        background:C.surface, borderRight:`1px solid ${C.border}`,
+        display:'flex', flexDirection:'column',
+        transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+        transition:'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
+      }} className="sidebar-desktop">
+        <style>{`
+          @media(min-width:1024px) {
+            .sidebar-desktop { transform: translateX(0) !important; position: static !important; }
+          }
+        `}</style>
+
+        {/* 로고 */}
+        <div style={{ padding:'20px 18px 18px', borderBottom:`1px solid ${C.border}` }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ width:40, height:40, borderRadius:12, background:`linear-gradient(135deg,${C.green},${C.gold})`, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', flexShrink:0, boxShadow:`0 4px 16px ${C.greenGlow}` }}>
+                <img src={LOGO_IMAGE} alt="태평농산" style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={e=>{(e.currentTarget as HTMLImageElement).style.display='none';(e.currentTarget as HTMLImageElement).insertAdjacentText('afterend','🌾');}} />
               </div>
-              <div className="min-w-0">
-                <h1 className="text-white font-bold text-sm">쌀집 대시보드</h1>
-                <p className="text-gray-400 text-xs truncate">{displayName}</p>
+              <div>
+                <p style={{ color:C.textPri, fontWeight:800, fontSize:15, margin:'0 0 2px', letterSpacing:-0.5 }}>태평농산</p>
+                <p style={{ color:C.textSec, fontSize:10, margin:0, fontWeight:500 }}>관리 대시보드</p>
               </div>
             </div>
-            <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-400 hover:text-white flex-shrink-0">
+            <button onClick={() => setSidebarOpen(false)} style={{ background:'none', border:'none', cursor:'pointer', color:C.textSec, padding:4, display:'none' }} className="sidebar-close">
               <X size={18} />
             </button>
           </div>
         </div>
+        <style>{`@media(max-width:1023px){.sidebar-close{display:block!important;}}`}</style>
 
-        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-          {TABS.map(tab => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button key={tab.id}
-                onClick={() => { setActiveTab(tab.id); setSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-[#3d4362] text-white' : 'text-gray-400 hover:text-white hover:bg-[#3d4362]/50'}`}
-              >
-                <tab.icon size={17} style={{ color: isActive ? tab.color : undefined }} />
-                <span className="truncate">{tab.label}</span>
-                {tab.id === 'tax' && thisMonth.unissuedCount > 0 && (
-                  <span className="ml-auto bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                    {thisMonth.unissuedCount}
-                  </span>
-                )}
-                {tab.id === 'inventory' && lowStockItems.length > 0 && (
-                  <span className="ml-auto bg-yellow-500 text-black text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                    {lowStockItems.length}
-                  </span>
-                )}
-                {tab.id === 'retail' && retailReminderCount > 0 && (
-                  <span className="ml-auto bg-pink-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                    {retailReminderCount}
-                  </span>
-                )}
-                {tab.id === 'orders' && pendingOrderCount > 0 && (
-                  <span className="ml-auto bg-orange-400 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                    {pendingOrderCount}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+        {/* 네비게이션 */}
+        <nav style={{ flex:1, padding:'12px 10px', overflowY:'auto' }}>
+          {groups.map(group => (
+            <div key={group} style={{ marginBottom:4 }}>
+              <p style={{ color:C.textMute, fontSize:10, fontWeight:700, letterSpacing:1, textTransform:'uppercase', padding:'8px 8px 4px', margin:0 }}>{group}</p>
+              {TABS.filter(t => t.group === group).map(tab => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button key={tab.id}
+                    onClick={() => { setActiveTab(tab.id); setSidebarOpen(false); }}
+                    style={{
+                      width:'100%', display:'flex', alignItems:'center', gap:10,
+                      padding:'9px 10px', borderRadius:10, marginBottom:2,
+                      background: isActive ? `${tab.color}18` : 'transparent',
+                      border: `1px solid ${isActive ? tab.color + '40' : 'transparent'}`,
+                      color: isActive ? tab.color : C.textSec,
+                      fontWeight: isActive ? 600 : 400,
+                      fontSize:13, cursor:'pointer', fontFamily:'inherit',
+                      transition:'all 0.15s', textAlign:'left',
+                    }}
+                    onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = C.surfaceHov; }}
+                    onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+                  >
+                    <tab.icon size={16} />
+                    <span style={{ flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{tab.label}</span>
+                    {tab.id === 'tax' && thisMonth.unissuedCount > 0 && <span style={{ background:'#ef4444', color:'#fff', borderRadius:10, minWidth:18, height:18, fontSize:10, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>{thisMonth.unissuedCount}</span>}
+                    {tab.id === 'inventory' && lowStockItems.length > 0 && <span style={{ background:C.yellow, color:'#000', borderRadius:10, minWidth:18, height:18, fontSize:10, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>{lowStockItems.length}</span>}
+                    {tab.id === 'retail' && retailReminderCount > 0 && <span style={{ background:C.pink, color:'#fff', borderRadius:10, minWidth:18, height:18, fontSize:10, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>{retailReminderCount}</span>}
+                    {tab.id === 'orders' && pendingOrderCount > 0 && <span style={{ background:C.orange, color:'#fff', borderRadius:10, minWidth:18, height:18, fontSize:10, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>{pendingOrderCount}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
-        <div className="p-3 border-t border-[#3d4362]">
-          <div className="bg-[#1a1d29] rounded-xl p-3">
-            <p className="text-gray-400 text-xs mb-1">이번달 순이익</p>
-            <p className={`font-bold text-base ${thisMonth.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+        {/* 하단 순이익 */}
+        <div style={{ padding:'12px 14px', borderTop:`1px solid ${C.border}` }}>
+          <div style={{ background:C.bg, borderRadius:12, padding:'12px 14px', border:`1px solid ${C.border}` }}>
+            <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
+              <Leaf size={12} color={C.green} />
+              <p style={{ color:C.textSec, fontSize:11, margin:0 }}>이번달 순이익</p>
+            </div>
+            <p style={{ fontWeight:800, fontSize:16, margin:0, color: thisMonth.profit >= 0 ? C.green : C.red }}>
               {formatKRW(thisMonth.profit)}
             </p>
           </div>
         </div>
       </aside>
 
-      {/* 메인 */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-[#2d3142] border-b border-[#3d4362] px-4 py-3 flex items-center justify-between sticky top-0 z-20">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-gray-400 hover:text-white">
+      {/* ── 메인 영역 ── */}
+      <div style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0, marginLeft:0 }} className="main-content">
+        <style>{`@media(min-width:1024px){.main-content{margin-left:228px;}}`}</style>
+
+        {/* 헤더 */}
+        <header style={{ background:C.surface, borderBottom:`1px solid ${C.border}`, padding:'0 16px', display:'flex', alignItems:'center', justifyContent:'space-between', height:56, position:'sticky', top:0, zIndex:20, flexShrink:0 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+            <button onClick={() => setSidebarOpen(true)} style={{ background:'none', border:'none', cursor:'pointer', color:C.textSec, padding:4, display:'flex' }} className="menu-btn">
               <Menu size={22} />
             </button>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-400 hidden sm:inline">🌾 쌀집</span>
-              <span className="text-gray-600 hidden sm:inline">/</span>
-              <span className="text-white font-medium">{TABS.find(t => t.id === activeTab)?.label}</span>
+            <style>{`@media(min-width:1024px){.menu-btn{display:none!important;}}`}</style>
+            {/* 브레드크럼 */}
+            <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:13 }}>
+              <span style={{ color:C.textMute, display:'flex', alignItems:'center', gap:4 }}>
+                <Wheat size={14} /> 태평농산
+              </span>
+              <span style={{ color:C.border }}>›</span>
+              <span style={{ color:C.textPri, fontWeight:600 }}>{TABS.find(t => t.id === activeTab)?.label}</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+
+          {/* 헤더 알림 버튼들 */}
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
             {thisMonth.unissuedCount > 0 && (
               <button onClick={() => setActiveTab('tax')}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-500/20 text-red-400 rounded-lg text-xs font-medium hover:bg-red-500/30 transition-colors">
-                <Bell size={12} />
-                <span className="hidden sm:inline">미발행 </span>{thisMonth.unissuedCount}건
+                style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 10px', background:'rgba(248,113,113,0.12)', color:C.red, borderRadius:8, fontSize:11, fontWeight:600, border:'1px solid rgba(248,113,113,0.25)', cursor:'pointer', fontFamily:'inherit' }}>
+                <Bell size={12} /> <span className="hide-sm">미발행 </span>{thisMonth.unissuedCount}건
               </button>
             )}
             {retailReminderCount > 0 && (
               <button onClick={() => setActiveTab('retail')}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-pink-500/20 text-pink-400 rounded-lg text-xs font-medium hover:bg-pink-500/30 transition-colors">
-                <Heart size={12} />
-                <span className="hidden sm:inline">재구매 </span>{retailReminderCount}명
+                style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 10px', background:'rgba(244,114,182,0.12)', color:C.pink, borderRadius:8, fontSize:11, fontWeight:600, border:'1px solid rgba(244,114,182,0.25)', cursor:'pointer', fontFamily:'inherit' }}>
+                <Heart size={12} /> <span className="hide-sm">재구매 </span>{retailReminderCount}명
               </button>
             )}
             {pendingOrderCount > 0 && (
               <button onClick={() => setActiveTab('orders')}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-orange-400/20 text-orange-400 rounded-lg text-xs font-medium hover:bg-orange-400/30 transition-colors">
-                <ClipboardList size={12} />
-                <span className="hidden sm:inline">주문 </span>{pendingOrderCount}건
+                style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 10px', background:'rgba(232,98,26,0.12)', color:C.orange, borderRadius:8, fontSize:11, fontWeight:600, border:'1px solid rgba(232,98,26,0.25)', cursor:'pointer', fontFamily:'inherit' }}>
+                <ClipboardList size={12} /> <span className="hide-sm">주문 </span>{pendingOrderCount}건
               </button>
             )}
             <button onClick={() => setActiveTab('settings')}
-              className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00d9ff] to-[#7c3aed] flex items-center justify-center text-sm hover:scale-110 transition-transform flex-shrink-0"
+              style={{ width:36, height:36, borderRadius:'50%', background:`linear-gradient(135deg,${C.green},${C.gold})`, border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:`0 2px 12px ${C.greenGlow}`, overflow:'hidden', flexShrink:0 }}
               title={`${displayName} 설정`}
             >
-              🌾
+              <img src={LOGO_IMAGE} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={e=>{(e.currentTarget as HTMLImageElement).style.display='none';}} />
             </button>
           </div>
+          <style>{`@media(max-width:640px){.hide-sm{display:none!important;}}`}</style>
         </header>
 
-        <main className="flex-1 p-4 md:p-6 overflow-auto">
-          {activeTab === 'overview'  && <OverviewPage />}
-          {activeTab === 'master'    && <MasterDataPage />}
-          {activeTab === 'sales'     && <SalesPage />}
-          {activeTab === 'profit'    && <ProfitPage />}
-          {activeTab === 'inventory' && <InventoryPage />}
-          {activeTab === 'tax'       && <TaxInvoicePage />}
-          {activeTab === 'retail'    && <RetailCustomerPage />}
-          {activeTab === 'shop'      && <ShopProductPage />}
-          {activeTab === 'orders'    && <OrderManagePage />}
-          {activeTab === 'settings'  && (
-            <SettingsPage onLogout={onLogout} username={username} displayName={displayName} />
-          )}
+        {/* 콘텐츠 */}
+        <main style={{ flex:1, padding:'20px 16px', overflowY:'auto', background:C.bg }}>
+          <div style={{ maxWidth:1200, margin:'0 auto' }}>
+            {activeTab === 'overview'  && <OverviewPage />}
+            {activeTab === 'master'    && <MasterDataPage />}
+            {activeTab === 'sales'     && <SalesPage />}
+            {activeTab === 'profit'    && <ProfitPage />}
+            {activeTab === 'inventory' && <InventoryPage />}
+            {activeTab === 'tax'       && <TaxInvoicePage />}
+            {activeTab === 'retail'    && <RetailCustomerPage />}
+            {activeTab === 'shop'      && <ShopProductPage />}
+            {activeTab === 'orders'    && <OrderManagePage />}
+            {activeTab === 'settings'  && <SettingsPage onLogout={onLogout} username={username} displayName={displayName} />}
+          </div>
         </main>
       </div>
     </div>

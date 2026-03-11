@@ -1,12 +1,12 @@
-// 간편 주문 페이지 (비회원 / 모바일 최적화)
+// 태평농산 간편주문 페이지 — 모바일/PC 완전 최적화
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   ShoppingCart, Plus, Minus, Trash2, ChevronRight, ChevronLeft,
   Package, Truck, Clock, CheckCircle, Phone, MapPin, Calendar,
-  User, MessageSquare, X, AlertCircle, Loader2, Star, Zap
+  User, MessageSquare, X, Loader2, Zap, Leaf, Star, ArrowRight,
+  ShoppingBag, Award, Shield
 } from 'lucide-react';
 
-// ─── 타입 ────────────────────────────────────────────────────────────────────
 interface ShopProduct {
   id: string;
   name: string;
@@ -31,17 +31,33 @@ interface CartItem {
 type Step = 'products' | 'cart' | 'info' | 'done';
 
 const formatKRW = (v: number) => `₩${v.toLocaleString('ko-KR')}`;
+const QUICK_QTY = [1, 2, 3, 5, 10];
 
-const UNIT_STEPS: Record<string, number> = {
-  'kg': 1, '포대': 1, '박스': 1, '개': 1, '10kg': 1, '20kg': 1,
+// 태평농산 브랜드 색상 팔레트
+const BRAND = {
+  green:      '#1a5c2a',
+  greenLight: '#2d7a3e',
+  greenPale:  '#e8f5eb',
+  gold:       '#c8a951',
+  goldLight:  '#f7d97a',
+  goldPale:   '#fdf8ec',
+  orange:     '#e8621a',
+  orangeLight:'#f07d3a',
+  cream:      '#fafaf5',
+  dark:       '#1c2614',
+  gray:       '#6b7280',
+  grayLight:  '#f3f4f6',
+  white:      '#ffffff',
 };
 
-function getStep(unit: string): number {
-  return UNIT_STEPS[unit] ?? 1;
-}
+// 히어로 배너 이미지 (AI 생성)
+const HERO_IMAGE = 'https://www.genspark.ai/api/files/s/f8bEv0ee?cache_control=3600';
+const LOGO_IMAGE = 'https://www.genspark.ai/api/files/s/QTqN4PyP?cache_control=3600';
 
-// 빠른 수량 선택 버튼
-const QUICK_QTY = [1, 2, 3, 5, 10];
+// 기본 쌀 상품 이미지 플레이스홀더
+const DEFAULT_PRODUCT_IMAGES: Record<string, string> = {
+  default: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&q=80',
+};
 
 export default function OrderPage() {
   const [step, setStep] = useState<Step>('products');
@@ -52,36 +68,25 @@ export default function OrderPage() {
   const [error, setError] = useState('');
   const [orderResult, setOrderResult] = useState<{ orderNo: string; totalAmount: number } | null>(null);
 
-  // 고객 정보
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
   const [memo, setMemo] = useState('');
 
-  // 선택된 상품 팝업
   const [selectedProduct, setSelectedProduct] = useState<ShopProduct | null>(null);
   const [selectQty, setSelectQty] = useState(1);
 
-  // 최소 배송 희망일 (오늘 포함)
   const minDate = new Date().toISOString().slice(0, 10);
 
-  // ─── 상품 로드 ───────────────────────────────────────────────────────────
   useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch('/api/shop/products');
-        const data = await res.json();
-        setProducts(Array.isArray(data) ? data : []);
-      } catch {
-        setProducts([]);
-      }
-      setLoading(false);
-    };
-    load();
+    fetch('/api/shop/products')
+      .then(r => r.json())
+      .then(d => setProducts(Array.isArray(d) ? d : []))
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false));
   }, []);
 
-  // ─── 장바구니 ────────────────────────────────────────────────────────────
   const addToCart = useCallback((product: ShopProduct, qty: number) => {
     setCart(prev => {
       const exist = prev.find(c => c.productId === product.id);
@@ -92,12 +97,9 @@ export default function OrderPage() {
         );
       }
       return [...prev, {
-        productId: product.id,
-        productName: product.name,
-        unit: product.unit,
-        quantity: qty,
-        unitPrice: product.price,
-        totalPrice: product.price * qty,
+        productId: product.id, productName: product.name,
+        unit: product.unit, quantity: qty,
+        unitPrice: product.price, totalPrice: product.price * qty,
       }];
     });
     setSelectedProduct(null);
@@ -109,8 +111,7 @@ export default function OrderPage() {
       .map(c => c.productId === productId
         ? { ...c, quantity: Math.max(0, c.quantity + delta), totalPrice: Math.max(0, c.quantity + delta) * c.unitPrice }
         : c
-      )
-      .filter(c => c.quantity > 0)
+      ).filter(c => c.quantity > 0)
     );
   }, []);
 
@@ -121,25 +122,20 @@ export default function OrderPage() {
   const cartTotal = cart.reduce((s, c) => s + c.totalPrice, 0);
   const cartCount = cart.reduce((s, c) => s + c.quantity, 0);
 
-  // ─── 주문 제출 ───────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!name.trim()) { setError('이름을 입력해주세요.'); return; }
     if (!phone.trim()) { setError('연락처를 입력해주세요.'); return; }
     if (!address.trim()) { setError('주소를 입력해주세요.'); return; }
     if (!deliveryDate) { setError('배송 희망일을 선택해주세요.'); return; }
-    setError('');
-    setSubmitting(true);
+    setError(''); setSubmitting(true);
     try {
       const res = await fetch('/api/shop/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customerName: name.trim(),
-          customerPhone: phone.trim(),
-          customerAddress: address.trim(),
-          deliveryDate,
-          items: cart,
-          memo: memo.trim(),
+          customerName: name.trim(), customerPhone: phone.trim(),
+          customerAddress: address.trim(), deliveryDate,
+          items: cart, memo: memo.trim(),
         }),
       });
       const data = await res.json();
@@ -148,517 +144,531 @@ export default function OrderPage() {
       setStep('done');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '주문 중 오류가 발생했습니다.');
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
-  // ─── 로딩 화면 ───────────────────────────────────────────────────────────
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0f172a] to-[#1e293b] flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <Loader2 className="animate-spin text-[#00d9ff] mx-auto" size={40} />
-          <p className="text-gray-300 text-sm">상품 정보를 불러오는 중...</p>
-        </div>
+  // ─────────────────────────────────────────────────────
+  // RENDER: 로딩
+  // ─────────────────────────────────────────────────────
+  if (loading) return (
+    <div style={{ minHeight:'100vh', background:BRAND.cream, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:16 }}>
+      <div style={{ width:72, height:72, borderRadius:'50%', background:`linear-gradient(135deg,${BRAND.green},${BRAND.gold})`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <Leaf size={36} color={BRAND.white} />
       </div>
-    );
-  }
+      <Loader2 size={28} color={BRAND.green} style={{ animation:'spin 1s linear infinite' }} />
+      <p style={{ color:BRAND.gray, fontSize:15 }}>태평농산 상품을 불러오는 중...</p>
+      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
 
-  // ─── 완료 화면 ───────────────────────────────────────────────────────────
-  if (step === 'done' && orderResult) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0f172a] to-[#1e293b] flex items-center justify-center p-4">
-        <div className="w-full max-w-md text-center space-y-6">
-          <div className="w-20 h-20 bg-green-500/20 border-2 border-green-400 rounded-full flex items-center justify-center mx-auto">
-            <CheckCircle size={40} className="text-green-400" />
+  // ─────────────────────────────────────────────────────
+  // RENDER: 주문완료
+  // ─────────────────────────────────────────────────────
+  if (step === 'done' && orderResult) return (
+    <div style={{ minHeight:'100vh', background:BRAND.cream, display:'flex', alignItems:'center', justifyContent:'center', padding:'20px 16px' }}>
+      <div style={{ width:'100%', maxWidth:480, background:BRAND.white, borderRadius:24, boxShadow:'0 20px 60px rgba(26,92,42,0.15)', overflow:'hidden' }}>
+        {/* 헤더 */}
+        <div style={{ background:`linear-gradient(135deg,${BRAND.green},${BRAND.greenLight})`, padding:'40px 32px 32px', textAlign:'center' }}>
+          <div style={{ width:80, height:80, borderRadius:'50%', background:'rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
+            <CheckCircle size={44} color={BRAND.white} />
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-white mb-2">주문 완료!</h2>
-            <p className="text-gray-400">주문이 정상적으로 접수되었습니다.</p>
-          </div>
-          <div className="bg-[#1e293b] border border-[#334155] rounded-2xl p-6 text-left space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400 text-sm">주문번호</span>
-              <span className="text-[#00d9ff] font-mono font-bold">{orderResult.orderNo}</span>
+          <h2 style={{ color:BRAND.white, fontSize:24, fontWeight:700, margin:'0 0 8px' }}>주문 완료!</h2>
+          <p style={{ color:'rgba(255,255,255,0.85)', fontSize:14, margin:0 }}>소중한 주문 감사드립니다 🌾</p>
+        </div>
+        {/* 주문 정보 */}
+        <div style={{ padding:'28px 28px 24px' }}>
+          <div style={{ background:BRAND.greenPale, borderRadius:16, padding:'20px 24px', marginBottom:20 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+              <span style={{ color:BRAND.gray, fontSize:13 }}>주문번호</span>
+              <span style={{ color:BRAND.green, fontWeight:700, fontSize:15 }}>{orderResult.orderNo}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400 text-sm">결제 예정 금액</span>
-              <span className="text-white font-bold text-lg">{formatKRW(orderResult.totalAmount)}</span>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+              <span style={{ color:BRAND.gray, fontSize:13 }}>결제금액</span>
+              <span style={{ color:BRAND.green, fontWeight:700, fontSize:18 }}>{formatKRW(orderResult.totalAmount)}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400 text-sm">배송 희망일</span>
-              <span className="text-white text-sm">{deliveryDate}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400 text-sm">주문자</span>
-              <span className="text-white text-sm">{name} · {phone}</span>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <span style={{ color:BRAND.gray, fontSize:13 }}>배송 희망일</span>
+              <span style={{ color:BRAND.dark, fontWeight:600, fontSize:14 }}>{deliveryDate}</span>
             </div>
           </div>
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <Phone size={16} className="text-blue-400 flex-shrink-0 mt-0.5" />
-              <p className="text-blue-300 text-sm">주문 확인 후 연락드리겠습니다. 당일 주문은 당일 배송 가능!</p>
+          {/* 당일배송 안내 */}
+          <div style={{ background:`linear-gradient(135deg,${BRAND.orange},${BRAND.orangeLight})`, borderRadius:16, padding:'16px 20px', marginBottom:20, display:'flex', alignItems:'center', gap:12 }}>
+            <Zap size={24} color={BRAND.white} />
+            <div>
+              <p style={{ color:BRAND.white, fontWeight:700, fontSize:14, margin:'0 0 2px' }}>당일배송 가능!</p>
+              <p style={{ color:'rgba(255,255,255,0.9)', fontSize:12, margin:0 }}>오전 11시 이전 주문 → 당일 배송</p>
             </div>
+          </div>
+          {/* 안내 */}
+          <div style={{ background:BRAND.grayLight, borderRadius:12, padding:'14px 16px', marginBottom:20 }}>
+            <p style={{ color:BRAND.gray, fontSize:13, margin:'0 0 6px', fontWeight:600 }}>📞 배송 확인은 아래로 문의하세요</p>
+            <p style={{ color:BRAND.dark, fontSize:14, fontWeight:600, margin:0 }}>태평농산 고객센터</p>
           </div>
           <button
             onClick={() => { setStep('products'); setCart([]); setName(''); setPhone(''); setAddress(''); setDeliveryDate(''); setMemo(''); setOrderResult(null); }}
-            className="w-full py-3.5 bg-[#00d9ff] text-[#0f172a] font-bold rounded-2xl text-base active:scale-95 transition-transform"
+            style={{ width:'100%', padding:'16px', borderRadius:16, background:`linear-gradient(135deg,${BRAND.green},${BRAND.greenLight})`, color:BRAND.white, fontWeight:700, fontSize:16, border:'none', cursor:'pointer' }}
           >
-            새 주문하기
+            새로운 주문하기
           </button>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 
-  // ─── 메인 ────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────
+  // RENDER: 메인 레이아웃
+  // ─────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0f172a] to-[#1e293b] pb-32">
-      {/* 헤더 */}
-      <header className="sticky top-0 z-30 bg-[#0f172a]/95 backdrop-blur border-b border-[#1e293b] px-4 py-3">
-        <div className="max-w-lg mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#00d9ff] to-[#7c3aed] rounded-xl flex items-center justify-center text-base">
-              🌾
+    <div style={{ minHeight:'100vh', background:BRAND.cream, fontFamily:'"Noto Sans KR",Apple SD Gothic Neo,sans-serif' }}>
+      <style>{`
+        * { box-sizing: border-box; }
+        body { margin: 0; }
+        input, textarea, select { font-family: inherit; }
+        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        @keyframes slideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+        .product-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(26,92,42,0.18) !important; }
+        .product-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .btn-primary:hover { opacity: 0.92; transform: translateY(-1px); }
+        .btn-primary { transition: opacity 0.15s, transform 0.15s; }
+        @media(max-width:640px) {
+          .pc-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .hero-title { font-size: 28px !important; }
+          .hero-sub { font-size: 14px !important; }
+        }
+        @media(min-width:641px) {
+          .pc-grid { grid-template-columns: repeat(3, 1fr) !important; }
+          .hero-title { font-size: 40px !important; }
+        }
+        @media(min-width:1024px) {
+          .pc-grid { grid-template-columns: repeat(4, 1fr) !important; }
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: ${BRAND.grayLight}; }
+        ::-webkit-scrollbar-thumb { background: ${BRAND.green}; border-radius: 3px; }
+      `}</style>
+
+      {/* ── 상단 배송 알림 띠 ── */}
+      <div style={{ background:`linear-gradient(90deg,${BRAND.green},${BRAND.greenLight})`, padding:'8px 16px', textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+        <Zap size={14} color={BRAND.goldLight} />
+        <span style={{ color:BRAND.white, fontSize:13, fontWeight:600 }}>오전 11시 이전 주문 시 당일 배송!</span>
+        <Zap size={14} color={BRAND.goldLight} />
+      </div>
+
+      {/* ── 헤더 ── */}
+      <header style={{ background:BRAND.white, borderBottom:`1px solid ${BRAND.grayLight}`, position:'sticky', top:0, zIndex:100, boxShadow:'0 2px 12px rgba(0,0,0,0.06)' }}>
+        <div style={{ maxWidth:1100, margin:'0 auto', padding:'0 16px', display:'flex', alignItems:'center', justifyContent:'space-between', height:60 }}>
+          {/* 로고 */}
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <div style={{ width:38, height:38, borderRadius:'50%', background:`linear-gradient(135deg,${BRAND.green},${BRAND.gold})`, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
+              <img src={LOGO_IMAGE} alt="태평농산" style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
             </div>
             <div>
-              <h1 className="text-white font-bold text-sm leading-tight">쌀집 간편 주문</h1>
-              <p className="text-[#00d9ff] text-xs">신선한 쌀을 빠르게!</p>
+              <div style={{ fontWeight:800, fontSize:17, color:BRAND.dark, letterSpacing:-0.5, lineHeight:1.2 }}>태평농산</div>
+              <div style={{ fontSize:10, color:BRAND.gold, fontWeight:600 }}>TAEPYUNG NONGSAN</div>
             </div>
           </div>
-          {cart.length > 0 && step === 'products' && (
+          {/* 장바구니 버튼 */}
+          {step === 'products' && (
             <button
-              onClick={() => setStep('cart')}
-              className="relative flex items-center gap-1.5 bg-[#00d9ff]/15 border border-[#00d9ff]/40 text-[#00d9ff] px-3 py-1.5 rounded-xl text-xs font-semibold active:scale-95 transition-transform"
+              onClick={() => cart.length > 0 && setStep('cart')}
+              style={{ position:'relative', background: cart.length > 0 ? BRAND.green : BRAND.grayLight, border:'none', borderRadius:12, padding:'8px 16px', display:'flex', alignItems:'center', gap:8, cursor: cart.length > 0 ? 'pointer' : 'default', color: cart.length > 0 ? BRAND.white : BRAND.gray }}
             >
-              <ShoppingCart size={14} />
-              장바구니
-              <span className="absolute -top-1.5 -right-1.5 bg-[#00d9ff] text-[#0f172a] text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                {cart.length}
-              </span>
+              <ShoppingCart size={18} />
+              <span style={{ fontWeight:700, fontSize:14 }}>{formatKRW(cartTotal)}</span>
+              {cartCount > 0 && (
+                <span style={{ position:'absolute', top:-6, right:-6, background:BRAND.orange, color:BRAND.white, borderRadius:'50%', width:20, height:20, display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:700 }}>
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          )}
+          {step !== 'products' && step !== 'done' && (
+            <button onClick={() => setStep(step === 'info' ? 'cart' : 'products')} style={{ border:'none', background:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:6, color:BRAND.green, fontWeight:600, fontSize:14, padding:'8px 12px' }}>
+              <ChevronLeft size={18} /> 이전
             </button>
           )}
         </div>
       </header>
 
-      {/* 당일 배송 배너 */}
-      <div className="bg-gradient-to-r from-[#f59e0b] to-[#ef4444] px-4 py-2.5">
-        <div className="max-w-lg mx-auto flex items-center justify-center gap-2">
-          <Zap size={14} className="text-white flex-shrink-0" />
-          <p className="text-white text-xs font-bold text-center">
-            ⚡ 오전 11시 이전 주문 시 <span className="underline">당일 배송</span> 가능! · 지역 내 직접 배송
-          </p>
-        </div>
-      </div>
-
-      <div className="max-w-lg mx-auto px-4 mt-4">
-        {/* 스텝 인디케이터 */}
-        {step !== 'done' && (
-          <div className="flex items-center justify-center gap-2 mb-5">
-            {(['products', 'cart', 'info'] as Step[]).map((s, i) => {
-              const labels = ['상품선택', '장바구니', '주문정보'];
-              const stepIdx = ['products', 'cart', 'info'].indexOf(step);
-              const isActive = s === step;
-              const isDone = i < stepIdx;
+      {/* ── STEP 진행 표시 ── */}
+      {step !== 'done' && (
+        <div style={{ background:BRAND.white, borderBottom:`1px solid ${BRAND.grayLight}`, padding:'12px 16px' }}>
+          <div style={{ maxWidth:1100, margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'center', gap:0 }}>
+            {(['products','cart','info'] as Step[]).map((s, i) => {
+              const labels = ['상품선택','장바구니','주문정보'];
+              const icons = [<Package size={14}/>, <ShoppingCart size={14}/>, <User size={14}/>];
+              const active = step === s;
+              const done = (['products','cart','info'] as Step[]).indexOf(step) > i;
               return (
                 <React.Fragment key={s}>
-                  {i > 0 && <div className={`h-px flex-1 max-w-[40px] ${isDone ? 'bg-[#00d9ff]' : 'bg-[#334155]'}`} />}
-                  <div className={`flex items-center gap-1 text-xs font-medium ${isActive ? 'text-[#00d9ff]' : isDone ? 'text-[#00d9ff]/70' : 'text-gray-600'}`}>
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${isActive ? 'bg-[#00d9ff] text-[#0f172a]' : isDone ? 'bg-[#00d9ff]/20 text-[#00d9ff]' : 'bg-[#334155] text-gray-600'}`}>
-                      {isDone ? '✓' : i + 1}
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4, minWidth:70 }}>
+                    <div style={{ width:32, height:32, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', background: done ? BRAND.green : active ? BRAND.green : BRAND.grayLight, color: done||active ? BRAND.white : BRAND.gray, fontWeight:700, fontSize:12, border: active ? `2px solid ${BRAND.gold}` : 'none', transition:'all 0.3s' }}>
+                      {done ? <CheckCircle size={16}/> : icons[i]}
                     </div>
-                    <span className="hidden sm:inline">{labels[i]}</span>
+                    <span style={{ fontSize:11, fontWeight: active ? 700 : 400, color: active ? BRAND.green : done ? BRAND.green : BRAND.gray }}>{labels[i]}</span>
                   </div>
+                  {i < 2 && <div style={{ flex:1, height:2, background: done ? BRAND.green : BRAND.grayLight, maxWidth:60, margin:'0 4px', marginBottom:18, transition:'background 0.3s' }} />}
                 </React.Fragment>
               );
             })}
           </div>
-        )}
-
-        {/* ── 상품 목록 ─────────────────────────────────────────────────── */}
-        {step === 'products' && (
-          <div className="space-y-3">
-            <h2 className="text-white font-bold text-lg">상품 선택</h2>
-            {products.length === 0 ? (
-              <div className="text-center py-16 space-y-3">
-                <Package size={48} className="text-gray-600 mx-auto" />
-                <p className="text-gray-500">현재 등록된 상품이 없습니다.</p>
-                <p className="text-gray-600 text-sm">잠시 후 다시 확인해주세요.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-3">
-                {products.map(p => {
-                  const inCart = cart.find(c => c.productId === p.id);
-                  const unitOpts: string[] = (() => {
-                    try { return JSON.parse(p.unit_options); } catch { return []; }
-                  })();
-                  return (
-                    <div key={p.id} className="bg-[#1e293b] border border-[#334155] rounded-2xl overflow-hidden">
-                      {p.image_url && (
-                        <div className="w-full h-36 bg-[#0f172a] overflow-hidden">
-                          <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
-                        </div>
-                      )}
-                      <div className="p-4">
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <h3 className="text-white font-bold text-base leading-tight">{p.name}</h3>
-                          {inCart && (
-                            <span className="flex-shrink-0 bg-[#00d9ff]/20 text-[#00d9ff] text-xs font-bold px-2 py-0.5 rounded-full border border-[#00d9ff]/40">
-                              담김 {inCart.quantity}{p.unit}
-                            </span>
-                          )}
-                        </div>
-                        {p.description && (
-                          <p className="text-gray-400 text-sm mb-2 leading-relaxed">{p.description}</p>
-                        )}
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="text-[#00d9ff] font-bold text-xl">{formatKRW(p.price)}</span>
-                            <span className="text-gray-500 text-xs ml-1">/ {p.unit}</span>
-                          </div>
-                          <button
-                            onClick={() => { setSelectedProduct(p); setSelectQty(1); }}
-                            className="bg-[#00d9ff] text-[#0f172a] font-bold px-4 py-2 rounded-xl text-sm active:scale-95 transition-transform flex items-center gap-1.5"
-                          >
-                            <Plus size={14} />
-                            담기
-                          </button>
-                        </div>
-                        {unitOpts.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {unitOpts.map(opt => (
-                              <span key={opt} className="text-xs text-gray-400 bg-[#334155] px-2 py-0.5 rounded-lg">{opt}</span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── 장바구니 ──────────────────────────────────────────────────── */}
-        {step === 'cart' && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <button onClick={() => setStep('products')} className="text-gray-400 hover:text-white transition-colors">
-                <ChevronLeft size={20} />
-              </button>
-              <h2 className="text-white font-bold text-lg">장바구니</h2>
-              <span className="text-gray-400 text-sm ml-1">({cart.length}개 상품)</span>
-            </div>
-
-            {cart.length === 0 ? (
-              <div className="text-center py-16 space-y-3">
-                <ShoppingCart size={48} className="text-gray-600 mx-auto" />
-                <p className="text-gray-500">장바구니가 비었습니다.</p>
-                <button onClick={() => setStep('products')} className="text-[#00d9ff] text-sm">
-                  상품 담으러 가기 →
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="space-y-3">
-                  {cart.map(item => (
-                    <div key={item.productId} className="bg-[#1e293b] border border-[#334155] rounded-2xl p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <p className="text-white font-semibold">{item.productName}</p>
-                          <p className="text-gray-400 text-sm">{formatKRW(item.unitPrice)} / {item.unit}</p>
-                        </div>
-                        <button onClick={() => removeFromCart(item.productId)} className="text-gray-600 hover:text-red-400 transition-colors p-1">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => updateCartQty(item.productId, -getStep(item.unit))}
-                            className="w-9 h-9 bg-[#334155] hover:bg-[#475569] text-white rounded-xl flex items-center justify-center active:scale-95 transition-all"
-                          >
-                            <Minus size={14} />
-                          </button>
-                          <span className="text-white font-bold text-lg min-w-[40px] text-center">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() => updateCartQty(item.productId, getStep(item.unit))}
-                            className="w-9 h-9 bg-[#00d9ff]/20 hover:bg-[#00d9ff]/30 text-[#00d9ff] rounded-xl flex items-center justify-center active:scale-95 transition-all"
-                          >
-                            <Plus size={14} />
-                          </button>
-                          <span className="text-gray-400 text-sm">{item.unit}</span>
-                        </div>
-                        <span className="text-[#00d9ff] font-bold text-lg">{formatKRW(item.totalPrice)}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* 합계 */}
-                <div className="bg-[#1e293b] border border-[#00d9ff]/20 rounded-2xl p-4">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-gray-400">총 수량</span>
-                    <span className="text-white">{cartCount.toLocaleString()} 단위</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-300 font-semibold">합계 금액</span>
-                    <span className="text-[#00d9ff] font-bold text-xl">{formatKRW(cartTotal)}</span>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* ── 주문 정보 ─────────────────────────────────────────────────── */}
-        {step === 'info' && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <button onClick={() => setStep('cart')} className="text-gray-400 hover:text-white transition-colors">
-                <ChevronLeft size={20} />
-              </button>
-              <h2 className="text-white font-bold text-lg">주문 정보 입력</h2>
-            </div>
-
-            <div className="space-y-3">
-              {/* 이름 */}
-              <div className="bg-[#1e293b] border border-[#334155] rounded-2xl p-4 space-y-2">
-                <label className="flex items-center gap-2 text-gray-300 text-sm font-medium">
-                  <User size={14} className="text-[#00d9ff]" />
-                  주문자 이름 <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder="홍길동"
-                  className="w-full bg-[#0f172a] border border-[#334155] text-white rounded-xl px-4 py-3 text-base focus:outline-none focus:border-[#00d9ff] transition-colors placeholder-gray-600"
-                />
-              </div>
-
-              {/* 연락처 */}
-              <div className="bg-[#1e293b] border border-[#334155] rounded-2xl p-4 space-y-2">
-                <label className="flex items-center gap-2 text-gray-300 text-sm font-medium">
-                  <Phone size={14} className="text-[#00d9ff]" />
-                  연락처 <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  placeholder="010-0000-0000"
-                  inputMode="tel"
-                  className="w-full bg-[#0f172a] border border-[#334155] text-white rounded-xl px-4 py-3 text-base focus:outline-none focus:border-[#00d9ff] transition-colors placeholder-gray-600"
-                />
-              </div>
-
-              {/* 배송 주소 */}
-              <div className="bg-[#1e293b] border border-[#334155] rounded-2xl p-4 space-y-2">
-                <label className="flex items-center gap-2 text-gray-300 text-sm font-medium">
-                  <MapPin size={14} className="text-[#00d9ff]" />
-                  배송 주소 <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={address}
-                  onChange={e => setAddress(e.target.value)}
-                  placeholder="시/도, 시/군/구, 상세주소"
-                  className="w-full bg-[#0f172a] border border-[#334155] text-white rounded-xl px-4 py-3 text-base focus:outline-none focus:border-[#00d9ff] transition-colors placeholder-gray-600"
-                />
-              </div>
-
-              {/* 배송 희망일 */}
-              <div className="bg-[#1e293b] border border-[#334155] rounded-2xl p-4 space-y-2">
-                <label className="flex items-center gap-2 text-gray-300 text-sm font-medium">
-                  <Calendar size={14} className="text-[#00d9ff]" />
-                  배송 희망일 <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={deliveryDate}
-                  onChange={e => setDeliveryDate(e.target.value)}
-                  min={minDate}
-                  className="w-full bg-[#0f172a] border border-[#334155] text-white rounded-xl px-4 py-3 text-base focus:outline-none focus:border-[#00d9ff] transition-colors"
-                />
-                <p className="text-[#f59e0b] text-xs flex items-center gap-1">
-                  <Zap size={11} />
-                  오전 11시 전 주문 시 당일 배송 가능
-                </p>
-              </div>
-
-              {/* 메모 */}
-              <div className="bg-[#1e293b] border border-[#334155] rounded-2xl p-4 space-y-2">
-                <label className="flex items-center gap-2 text-gray-300 text-sm font-medium">
-                  <MessageSquare size={14} className="text-[#00d9ff]" />
-                  배송 요청사항 <span className="text-gray-500 text-xs">(선택)</span>
-                </label>
-                <textarea
-                  value={memo}
-                  onChange={e => setMemo(e.target.value)}
-                  placeholder="문 앞에 놔주세요, 경비실에 맡겨주세요 등"
-                  rows={3}
-                  className="w-full bg-[#0f172a] border border-[#334155] text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00d9ff] transition-colors placeholder-gray-600 resize-none"
-                />
-              </div>
-            </div>
-
-            {/* 주문 요약 */}
-            <div className="bg-[#1e293b] border border-[#334155] rounded-2xl p-4 space-y-2">
-              <h3 className="text-white font-semibold text-sm mb-3">주문 요약</h3>
-              {cart.map(item => (
-                <div key={item.productId} className="flex justify-between text-sm">
-                  <span className="text-gray-400">{item.productName} × {item.quantity}{item.unit}</span>
-                  <span className="text-white">{formatKRW(item.totalPrice)}</span>
-                </div>
-              ))}
-              <div className="border-t border-[#334155] pt-2 mt-2 flex justify-between">
-                <span className="text-white font-semibold">합계</span>
-                <span className="text-[#00d9ff] font-bold text-lg">{formatKRW(cartTotal)}</span>
-              </div>
-            </div>
-
-            {/* 오류 */}
-            {error && (
-              <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
-                <AlertCircle size={14} className="text-red-400 flex-shrink-0" />
-                <p className="text-red-300 text-sm">{error}</p>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* ── 하단 고정 버튼 ──────────────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 z-30">
-        {/* 당일배송 홍보 배너 */}
-        <div className="bg-gradient-to-r from-[#7c3aed] via-[#00d9ff] to-[#7c3aed] bg-[length:200%_100%] animate-gradient-x px-4 py-2">
-          <div className="max-w-lg mx-auto flex items-center justify-center gap-3">
-            <Truck size={14} className="text-white flex-shrink-0" />
-            <p className="text-white text-xs font-medium">
-              🚚 <strong>당일 배송 가능</strong> · 오전 11시 마감 · 지역 내 신속 배송
-            </p>
-            <Clock size={14} className="text-white flex-shrink-0" />
-          </div>
         </div>
+      )}
 
-        <div className="bg-[#0f172a]/95 backdrop-blur border-t border-[#1e293b] px-4 py-3 safe-bottom">
-          <div className="max-w-lg mx-auto">
-            {step === 'products' && (
-              <div className="flex gap-3">
-                <div className="flex-1 bg-[#1e293b] border border-[#334155] rounded-2xl px-4 py-3 flex items-center justify-between">
-                  <span className="text-gray-400 text-sm">장바구니</span>
-                  <span className="text-[#00d9ff] font-bold">{formatKRW(cartTotal)}</span>
-                </div>
-                <button
-                  onClick={() => cart.length > 0 ? setStep('cart') : null}
-                  disabled={cart.length === 0}
-                  className="flex-1 bg-[#00d9ff] disabled:bg-[#334155] disabled:text-gray-600 text-[#0f172a] font-bold py-3 rounded-2xl text-base active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                  <ShoppingCart size={16} />
-                  담은 상품 보기 {cart.length > 0 && `(${cart.length})`}
-                </button>
+      {/* ════════════════════════════════════════════════════════
+          STEP 1: 상품 목록
+      ════════════════════════════════════════════════════════ */}
+      {step === 'products' && (
+        <div style={{ maxWidth:1100, margin:'0 auto', padding:'0 16px 120px' }}>
+
+          {/* 히어로 배너 */}
+          <div style={{ position:'relative', borderRadius:20, overflow:'hidden', margin:'16px 0 20px', minHeight:200, background:`linear-gradient(135deg,${BRAND.green} 0%,${BRAND.greenLight} 50%,${BRAND.gold} 100%)` }}>
+            <img src={HERO_IMAGE} alt="태평농산" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', opacity:0.5 }} onError={e => { (e.currentTarget as HTMLImageElement).style.opacity='0'; }} />
+            <div style={{ position:'relative', padding:'32px 28px', zIndex:1 }}>
+              <div style={{ display:'inline-flex', alignItems:'center', gap:6, background:'rgba(255,255,255,0.2)', borderRadius:20, padding:'4px 12px', marginBottom:12 }}>
+                <Leaf size={12} color={BRAND.white} />
+                <span style={{ color:BRAND.white, fontSize:12, fontWeight:600 }}>국내산 프리미엄</span>
               </div>
-            )}
-            {step === 'cart' && (
-              <button
-                onClick={() => cart.length > 0 ? setStep('info') : null}
-                disabled={cart.length === 0}
-                className="w-full bg-[#00d9ff] disabled:bg-[#334155] disabled:text-gray-600 text-[#0f172a] font-bold py-4 rounded-2xl text-base active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                주문 정보 입력
-                <ChevronRight size={18} />
-              </button>
-            )}
-            {step === 'info' && (
-              <button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="w-full bg-[#00d9ff] disabled:bg-[#00d9ff]/50 text-[#0f172a] font-bold py-4 rounded-2xl text-base active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                {submitting ? (
-                  <><Loader2 size={18} className="animate-spin" /> 주문 접수 중...</>
-                ) : (
-                  <><CheckCircle size={18} /> {formatKRW(cartTotal)} 주문 완료</>
-                )}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ── 상품 담기 팝업 ──────────────────────────────────────────────── */}
-      {selectedProduct && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setSelectedProduct(null)} />
-          <div className="relative w-full sm:max-w-md bg-[#1e293b] border border-[#334155] rounded-t-3xl sm:rounded-3xl p-6 space-y-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-white font-bold text-lg">{selectedProduct.name}</h3>
-                <p className="text-[#00d9ff] font-bold text-xl mt-1">
-                  {formatKRW(selectedProduct.price)} <span className="text-sm text-gray-400 font-normal">/ {selectedProduct.unit}</span>
-                </p>
-              </div>
-              <button onClick={() => setSelectedProduct(null)} className="text-gray-500 hover:text-white p-1">
-                <X size={20} />
-              </button>
-            </div>
-
-            {selectedProduct.description && (
-              <p className="text-gray-400 text-sm">{selectedProduct.description}</p>
-            )}
-
-            {/* 수량 선택 */}
-            <div>
-              <p className="text-gray-400 text-sm mb-2">수량 선택</p>
-              {/* 빠른 선택 */}
-              <div className="flex gap-2 mb-3 flex-wrap">
-                {QUICK_QTY.map(q => (
-                  <button
-                    key={q}
-                    onClick={() => setSelectQty(q)}
-                    className={`px-3 py-1.5 rounded-xl text-sm font-semibold transition-all ${selectQty === q ? 'bg-[#00d9ff] text-[#0f172a]' : 'bg-[#334155] text-gray-300 hover:bg-[#475569]'}`}
-                  >
-                    {q}{selectedProduct.unit}
-                  </button>
+              <h1 className="hero-title" style={{ color:BRAND.white, fontWeight:800, margin:'0 0 8px', letterSpacing:-1, lineHeight:1.2, fontSize:32 }}>
+                태평농산<br/>신선한 쌀
+              </h1>
+              <p className="hero-sub" style={{ color:'rgba(255,255,255,0.9)', fontSize:15, margin:'0 0 20px', fontWeight:400 }}>
+                직접 도정한 신선한 쌀을 빠르게 배송해드립니다
+              </p>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                {[{icon:<Zap size={12}/>, text:'당일배송'},{icon:<Shield size={12}/>, text:'국내산 보증'},{icon:<Award size={12}/>, text:'직접 도정'}].map((b,i) => (
+                  <div key={i} style={{ display:'flex', alignItems:'center', gap:5, background:'rgba(255,255,255,0.2)', borderRadius:16, padding:'6px 12px' }}>
+                    <span style={{ color:BRAND.goldLight }}>{b.icon}</span>
+                    <span style={{ color:BRAND.white, fontSize:12, fontWeight:600 }}>{b.text}</span>
+                  </div>
                 ))}
               </div>
-              {/* 수동 수량 */}
-              <div className="flex items-center gap-4 justify-center">
-                <button
-                  onClick={() => setSelectQty(q => Math.max(1, q - getStep(selectedProduct.unit)))}
-                  className="w-12 h-12 bg-[#334155] hover:bg-[#475569] text-white rounded-2xl flex items-center justify-center active:scale-95 transition-all"
-                >
-                  <Minus size={18} />
-                </button>
-                <span className="text-white font-bold text-2xl min-w-[60px] text-center">{selectQty}</span>
-                <button
-                  onClick={() => setSelectQty(q => q + getStep(selectedProduct.unit))}
-                  className="w-12 h-12 bg-[#00d9ff]/20 hover:bg-[#00d9ff]/30 text-[#00d9ff] rounded-2xl flex items-center justify-center active:scale-95 transition-all"
-                >
-                  <Plus size={18} />
-                </button>
-                <span className="text-gray-400">{selectedProduct.unit}</span>
-              </div>
             </div>
+          </div>
 
-            {/* 합계 및 담기 버튼 */}
-            <div className="flex items-center gap-3">
-              <div className="flex-1 bg-[#0f172a] rounded-2xl px-4 py-3 text-center">
-                <p className="text-gray-500 text-xs mb-0.5">합계</p>
-                <p className="text-[#00d9ff] font-bold text-lg">{formatKRW(selectedProduct.price * selectQty)}</p>
+          {/* 상품 그리드 */}
+          <h2 style={{ fontSize:18, fontWeight:700, color:BRAND.dark, margin:'0 0 14px', display:'flex', alignItems:'center', gap:8 }}>
+            <ShoppingBag size={20} color={BRAND.green} /> 상품 목록
+          </h2>
+
+          {products.length === 0 ? (
+            <div style={{ textAlign:'center', padding:'60px 20px', background:BRAND.white, borderRadius:20, boxShadow:'0 4px 20px rgba(0,0,0,0.06)' }}>
+              <Package size={48} color={BRAND.grayLight} style={{ marginBottom:16 }} />
+              <p style={{ color:BRAND.gray, fontSize:16, fontWeight:500 }}>등록된 상품이 없습니다</p>
+              <p style={{ color:BRAND.gray, fontSize:13 }}>관리자가 상품을 등록하면 이곳에 표시됩니다</p>
+            </div>
+          ) : (
+            <div className="pc-grid" style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:14 }}>
+              {products.map(p => {
+                const inCart = cart.find(c => c.productId === p.id);
+                return (
+                  <div
+                    key={p.id}
+                    className="product-card"
+                    style={{ background:BRAND.white, borderRadius:20, overflow:'hidden', boxShadow:'0 4px 20px rgba(26,92,42,0.08)', cursor:'pointer', border:`1px solid ${BRAND.grayLight}` }}
+                    onClick={() => { setSelectedProduct(p); setSelectQty(1); }}
+                  >
+                    {/* 상품 이미지 */}
+                    <div style={{ position:'relative', paddingTop:'70%', background:`linear-gradient(135deg,${BRAND.greenPale},${BRAND.goldPale})`, overflow:'hidden' }}>
+                      {p.image_url ? (
+                        <img src={p.image_url} alt={p.name} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGES.default; }} />
+                      ) : (
+                        <img src={DEFAULT_PRODUCT_IMAGES.default} alt={p.name} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} />
+                      )}
+                      {/* 배지 */}
+                      <div style={{ position:'absolute', top:10, left:10, background:`linear-gradient(135deg,${BRAND.green},${BRAND.greenLight})`, color:BRAND.white, borderRadius:8, padding:'3px 8px', fontSize:10, fontWeight:700 }}>
+                        국내산
+                      </div>
+                      {inCart && (
+                        <div style={{ position:'absolute', top:10, right:10, background:BRAND.orange, color:BRAND.white, borderRadius:8, padding:'3px 8px', fontSize:10, fontWeight:700 }}>
+                          담김 {inCart.quantity}{p.unit}
+                        </div>
+                      )}
+                    </div>
+                    {/* 상품 정보 */}
+                    <div style={{ padding:'14px 14px 16px' }}>
+                      <h3 style={{ fontSize:14, fontWeight:700, color:BRAND.dark, margin:'0 0 4px', lineHeight:1.4 }}>{p.name}</h3>
+                      {p.description && <p style={{ fontSize:12, color:BRAND.gray, margin:'0 0 10px', lineHeight:1.5, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{p.description}</p>}
+                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                        <div>
+                          <span style={{ fontSize:18, fontWeight:800, color:BRAND.green }}>{formatKRW(p.price)}</span>
+                          <span style={{ fontSize:11, color:BRAND.gray, marginLeft:3 }}>/{p.unit}</span>
+                        </div>
+                        <button
+                          onClick={e => { e.stopPropagation(); setSelectedProduct(p); setSelectQty(1); }}
+                          style={{ background:`linear-gradient(135deg,${BRAND.green},${BRAND.greenLight})`, color:BRAND.white, border:'none', borderRadius:10, padding:'8px 14px', fontWeight:700, fontSize:13, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}
+                        >
+                          <Plus size={14} /> 담기
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════
+          STEP 2: 장바구니
+      ════════════════════════════════════════════════════════ */}
+      {step === 'cart' && (
+        <div style={{ maxWidth:680, margin:'0 auto', padding:'16px 16px 120px' }}>
+          <h2 style={{ fontSize:20, fontWeight:700, color:BRAND.dark, margin:'0 0 16px', display:'flex', alignItems:'center', gap:8 }}>
+            <ShoppingCart size={22} color={BRAND.green} /> 장바구니
+          </h2>
+          {cart.length === 0 ? (
+            <div style={{ textAlign:'center', padding:'60px 20px', background:BRAND.white, borderRadius:20 }}>
+              <ShoppingCart size={48} color={BRAND.grayLight} style={{ marginBottom:12 }} />
+              <p style={{ color:BRAND.gray }}>장바구니가 비었습니다</p>
+              <button onClick={() => setStep('products')} style={{ marginTop:16, background:BRAND.green, color:BRAND.white, border:'none', borderRadius:12, padding:'12px 24px', fontWeight:700, cursor:'pointer' }}>상품 담기</button>
+            </div>
+          ) : (
+            <>
+              <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:20 }}>
+                {cart.map(item => (
+                  <div key={item.productId} style={{ background:BRAND.white, borderRadius:16, padding:'16px', display:'flex', alignItems:'center', gap:14, boxShadow:'0 2px 12px rgba(0,0,0,0.06)' }}>
+                    <div style={{ width:52, height:52, borderRadius:12, background:`linear-gradient(135deg,${BRAND.greenPale},${BRAND.goldPale})`, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
+                      <img src={DEFAULT_PRODUCT_IMAGES.default} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <p style={{ fontWeight:700, fontSize:14, color:BRAND.dark, margin:'0 0 4px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.productName}</p>
+                      <p style={{ fontSize:13, color:BRAND.green, fontWeight:600, margin:0 }}>{formatKRW(item.totalPrice)}</p>
+                    </div>
+                    <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
+                      <button onClick={() => updateCartQty(item.productId, -1)} style={{ width:30, height:30, borderRadius:'50%', border:`1.5px solid ${BRAND.green}`, background:BRAND.white, color:BRAND.green, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}><Minus size={14}/></button>
+                      <span style={{ minWidth:24, textAlign:'center', fontWeight:700, fontSize:15 }}>{item.quantity}</span>
+                      <button onClick={() => updateCartQty(item.productId, 1)} style={{ width:30, height:30, borderRadius:'50%', border:'none', background:BRAND.green, color:BRAND.white, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}><Plus size={14}/></button>
+                      <button onClick={() => removeFromCart(item.productId)} style={{ width:30, height:30, borderRadius:'50%', border:`1.5px solid #fecaca`, background:'#fff5f5', color:'#ef4444', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', marginLeft:4 }}><Trash2 size={14}/></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* 합계 */}
+              <div style={{ background:`linear-gradient(135deg,${BRAND.greenPale},${BRAND.goldPale})`, borderRadius:16, padding:'20px', marginBottom:20, border:`1px solid ${BRAND.green}20` }}>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                  <span style={{ color:BRAND.gray, fontSize:14 }}>상품 합계</span>
+                  <span style={{ color:BRAND.dark, fontWeight:600 }}>{formatKRW(cartTotal)}</span>
+                </div>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                  <span style={{ color:BRAND.gray, fontSize:14 }}>배송비</span>
+                  <span style={{ color:BRAND.green, fontWeight:600 }}>무료</span>
+                </div>
+                <div style={{ height:1, background:`${BRAND.green}20`, margin:'12px 0' }} />
+                <div style={{ display:'flex', justifyContent:'space-between' }}>
+                  <span style={{ color:BRAND.dark, fontWeight:700, fontSize:16 }}>총 결제금액</span>
+                  <span style={{ color:BRAND.green, fontWeight:800, fontSize:20 }}>{formatKRW(cartTotal)}</span>
+                </div>
               </div>
               <button
-                onClick={() => addToCart(selectedProduct, selectQty)}
-                className="flex-1 bg-[#00d9ff] text-[#0f172a] font-bold py-3 rounded-2xl text-base active:scale-95 transition-transform flex items-center justify-center gap-2"
+                className="btn-primary"
+                onClick={() => setStep('info')}
+                style={{ width:'100%', padding:'18px', borderRadius:16, background:`linear-gradient(135deg,${BRAND.green},${BRAND.greenLight})`, color:BRAND.white, fontWeight:700, fontSize:17, border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}
               >
-                <ShoppingCart size={16} />
-                장바구니 담기
+                주문 정보 입력 <ArrowRight size={20} />
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════
+          STEP 3: 주문 정보 입력
+      ════════════════════════════════════════════════════════ */}
+      {step === 'info' && (
+        <div style={{ maxWidth:680, margin:'0 auto', padding:'16px 16px 120px' }}>
+          <h2 style={{ fontSize:20, fontWeight:700, color:BRAND.dark, margin:'0 0 20px', display:'flex', alignItems:'center', gap:8 }}>
+            <User size={22} color={BRAND.green} /> 주문자 정보
+          </h2>
+
+          <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+            {/* 이름 */}
+            <div>
+              <label style={{ display:'block', fontWeight:600, fontSize:14, color:BRAND.dark, marginBottom:8 }}>
+                <User size={14} style={{ verticalAlign:'middle', marginRight:6 }} />이름 <span style={{ color:'#ef4444' }}>*</span>
+              </label>
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="홍길동"
+                style={{ width:'100%', padding:'14px 16px', borderRadius:12, border:`1.5px solid ${name ? BRAND.green : '#e5e7eb'}`, fontSize:15, outline:'none', background:BRAND.white, transition:'border-color 0.2s' }} />
+            </div>
+            {/* 연락처 */}
+            <div>
+              <label style={{ display:'block', fontWeight:600, fontSize:14, color:BRAND.dark, marginBottom:8 }}>
+                <Phone size={14} style={{ verticalAlign:'middle', marginRight:6 }} />연락처 <span style={{ color:'#ef4444' }}>*</span>
+              </label>
+              <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="010-0000-0000" type="tel"
+                style={{ width:'100%', padding:'14px 16px', borderRadius:12, border:`1.5px solid ${phone ? BRAND.green : '#e5e7eb'}`, fontSize:15, outline:'none', background:BRAND.white, transition:'border-color 0.2s' }} />
+            </div>
+            {/* 주소 */}
+            <div>
+              <label style={{ display:'block', fontWeight:600, fontSize:14, color:BRAND.dark, marginBottom:8 }}>
+                <MapPin size={14} style={{ verticalAlign:'middle', marginRight:6 }} />배송 주소 <span style={{ color:'#ef4444' }}>*</span>
+              </label>
+              <input value={address} onChange={e => setAddress(e.target.value)} placeholder="서울시 강남구 테헤란로 123"
+                style={{ width:'100%', padding:'14px 16px', borderRadius:12, border:`1.5px solid ${address ? BRAND.green : '#e5e7eb'}`, fontSize:15, outline:'none', background:BRAND.white, transition:'border-color 0.2s' }} />
+            </div>
+            {/* 배송일 */}
+            <div>
+              <label style={{ display:'block', fontWeight:600, fontSize:14, color:BRAND.dark, marginBottom:8 }}>
+                <Calendar size={14} style={{ verticalAlign:'middle', marginRight:6 }} />희망 배송일 <span style={{ color:'#ef4444' }}>*</span>
+              </label>
+              <input value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} type="date" min={minDate}
+                style={{ width:'100%', padding:'14px 16px', borderRadius:12, border:`1.5px solid ${deliveryDate ? BRAND.green : '#e5e7eb'}`, fontSize:15, outline:'none', background:BRAND.white, transition:'border-color 0.2s' }} />
+              <p style={{ fontSize:12, color:BRAND.orange, marginTop:6, display:'flex', alignItems:'center', gap:4 }}>
+                <Zap size={11} /> 오전 11시 이전 주문 시 오늘 배송 가능!
+              </p>
+            </div>
+            {/* 메모 */}
+            <div>
+              <label style={{ display:'block', fontWeight:600, fontSize:14, color:BRAND.dark, marginBottom:8 }}>
+                <MessageSquare size={14} style={{ verticalAlign:'middle', marginRight:6 }} />요청사항 <span style={{ color:BRAND.gray, fontWeight:400, fontSize:12 }}>(선택)</span>
+              </label>
+              <textarea value={memo} onChange={e => setMemo(e.target.value)} placeholder="배송 시 요청사항을 입력해 주세요" rows={3}
+                style={{ width:'100%', padding:'14px 16px', borderRadius:12, border:'1.5px solid #e5e7eb', fontSize:15, outline:'none', background:BRAND.white, resize:'none', lineHeight:1.6 }} />
+            </div>
+          </div>
+
+          {/* 주문 요약 */}
+          <div style={{ background:BRAND.white, borderRadius:16, padding:'18px', margin:'20px 0', boxShadow:'0 2px 12px rgba(0,0,0,0.06)' }}>
+            <h3 style={{ fontSize:14, fontWeight:700, color:BRAND.dark, margin:'0 0 12px', display:'flex', alignItems:'center', gap:6 }}><ShoppingBag size={16} color={BRAND.green}/> 주문 상품</h3>
+            {cart.map(item => (
+              <div key={item.productId} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'1px solid #f3f4f6' }}>
+                <span style={{ fontSize:13, color:BRAND.dark }}>{item.productName} × {item.quantity}{item.unit}</span>
+                <span style={{ fontSize:13, fontWeight:600, color:BRAND.green }}>{formatKRW(item.totalPrice)}</span>
+              </div>
+            ))}
+            <div style={{ display:'flex', justifyContent:'space-between', paddingTop:10, marginTop:4 }}>
+              <span style={{ fontWeight:700, fontSize:15, color:BRAND.dark }}>총 결제금액</span>
+              <span style={{ fontWeight:800, fontSize:18, color:BRAND.green }}>{formatKRW(cartTotal)}</span>
+            </div>
+          </div>
+
+          {error && (
+            <div style={{ background:'#fff5f5', border:'1.5px solid #fecaca', borderRadius:12, padding:'12px 16px', marginBottom:16, display:'flex', alignItems:'center', gap:8, color:'#ef4444', fontSize:14 }}>
+              <X size={16} /> {error}
+            </div>
+          )}
+
+          <button
+            className="btn-primary"
+            onClick={handleSubmit}
+            disabled={submitting}
+            style={{ width:'100%', padding:'18px', borderRadius:16, background: submitting ? BRAND.gray : `linear-gradient(135deg,${BRAND.green},${BRAND.greenLight})`, color:BRAND.white, fontWeight:700, fontSize:17, border:'none', cursor: submitting ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}
+          >
+            {submitting ? <><Loader2 size={20} style={{ animation:'spin 1s linear infinite' }} /> 주문 처리 중...</> : <><CheckCircle size={20} /> 주문 완료하기</>}
+          </button>
+        </div>
+      )}
+
+      {/* ── 하단 고정: 장바구니 버튼 (상품 목록에서) ── */}
+      {step === 'products' && cart.length > 0 && (
+        <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:200, padding:'12px 16px 20px', background:'linear-gradient(transparent,rgba(250,250,245,0.98))', animation:'slideUp 0.3s ease' }}>
+          <div style={{ maxWidth:680, margin:'0 auto' }}>
+            <button
+              className="btn-primary"
+              onClick={() => setStep('cart')}
+              style={{ width:'100%', padding:'18px', borderRadius:18, background:`linear-gradient(135deg,${BRAND.green},${BRAND.greenLight})`, color:BRAND.white, fontWeight:700, fontSize:17, border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:12, boxShadow:`0 8px 32px ${BRAND.green}50` }}
+            >
+              <ShoppingCart size={22} />
+              <span>장바구니 보기</span>
+              <span style={{ background:'rgba(255,255,255,0.25)', borderRadius:10, padding:'3px 10px', fontWeight:700 }}>{formatKRW(cartTotal)}</span>
+              <ArrowRight size={20} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── 하단 당일배송 배너 (항상 표시) ── */}
+      {step === 'products' && cart.length === 0 && (
+        <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:200, animation:'slideUp 0.4s ease' }}>
+          <div style={{ background:`linear-gradient(90deg,${BRAND.orange},${BRAND.orangeLight})`, padding:'14px 16px', display:'flex', alignItems:'center', justifyContent:'center', gap:12 }}>
+            <div style={{ width:36, height:36, borderRadius:'50%', background:'rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <Truck size={20} color={BRAND.white} />
+            </div>
+            <div>
+              <p style={{ color:BRAND.white, fontWeight:800, fontSize:15, margin:'0 0 1px' }}>⚡ 오늘 주문 오늘 배송!</p>
+              <p style={{ color:'rgba(255,255,255,0.9)', fontSize:12, margin:0 }}>오전 11시 이전 주문 → 당일 배송 완료</p>
+            </div>
+            <div style={{ background:'rgba(255,255,255,0.2)', borderRadius:10, padding:'4px 12px' }}>
+              <span style={{ color:BRAND.white, fontSize:12, fontWeight:700 }}>무료배송</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 상품 선택 모달 ── */}
+      {selectedProduct && (
+        <div style={{ position:'fixed', inset:0, zIndex:500, display:'flex', alignItems:'flex-end', justifyContent:'center' }}>
+          <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.5)' }} onClick={() => setSelectedProduct(null)} />
+          <div style={{ position:'relative', background:BRAND.white, borderRadius:'24px 24px 0 0', width:'100%', maxWidth:680, padding:'28px 24px 40px', animation:'slideUp 0.3s ease', maxHeight:'85vh', overflowY:'auto' }}>
+            <div style={{ width:40, height:4, background:'#e5e7eb', borderRadius:2, margin:'0 auto 20px' }} />
+            <button onClick={() => setSelectedProduct(null)} style={{ position:'absolute', top:20, right:20, width:32, height:32, borderRadius:'50%', background:BRAND.grayLight, border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}><X size={16}/></button>
+
+            {/* 상품 이미지 */}
+            <div style={{ borderRadius:16, overflow:'hidden', marginBottom:20, height:200, background:`linear-gradient(135deg,${BRAND.greenPale},${BRAND.goldPale})` }}>
+              <img src={selectedProduct.image_url || DEFAULT_PRODUCT_IMAGES.default} alt={selectedProduct.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={e => { (e.currentTarget as HTMLImageElement).src=DEFAULT_PRODUCT_IMAGES.default; }} />
+            </div>
+
+            <div style={{ marginBottom:4, display:'flex', gap:8 }}>
+              <span style={{ background:BRAND.greenPale, color:BRAND.green, borderRadius:8, padding:'3px 10px', fontSize:12, fontWeight:600 }}>국내산</span>
+              <span style={{ background:BRAND.goldPale, color:BRAND.gold, borderRadius:8, padding:'3px 10px', fontSize:12, fontWeight:600 }}>프리미엄</span>
+            </div>
+            <h3 style={{ fontSize:20, fontWeight:700, color:BRAND.dark, margin:'10px 0 6px' }}>{selectedProduct.name}</h3>
+            {selectedProduct.description && <p style={{ color:BRAND.gray, fontSize:14, lineHeight:1.6, margin:'0 0 16px' }}>{selectedProduct.description}</p>}
+
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
+              <div>
+                <span style={{ fontSize:26, fontWeight:800, color:BRAND.green }}>{formatKRW(selectedProduct.price)}</span>
+                <span style={{ fontSize:13, color:BRAND.gray, marginLeft:4 }}>/{selectedProduct.unit}</span>
+              </div>
+              <span style={{ color:BRAND.orange, fontSize:13, fontWeight:600, display:'flex', alignItems:'center', gap:4 }}>
+                <Zap size={14}/> 당일배송 가능
+              </span>
+            </div>
+
+            {/* 빠른 수량 */}
+            <p style={{ fontSize:13, fontWeight:600, color:BRAND.gray, marginBottom:10 }}>빠른 수량 선택</p>
+            <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+              {QUICK_QTY.map(q => (
+                <button key={q} onClick={() => setSelectQty(q)}
+                  style={{ padding:'8px 16px', borderRadius:10, border:`1.5px solid ${selectQty===q ? BRAND.green : '#e5e7eb'}`, background: selectQty===q ? BRAND.green : BRAND.white, color: selectQty===q ? BRAND.white : BRAND.dark, fontWeight:700, fontSize:14, cursor:'pointer', transition:'all 0.2s' }}>
+                  {q}{selectedProduct.unit}
+                </button>
+              ))}
+            </div>
+
+            {/* 수동 수량 조절 */}
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:20, marginBottom:24, background:BRAND.grayLight, borderRadius:16, padding:'14px' }}>
+              <button onClick={() => setSelectQty(Math.max(1, selectQty-1))}
+                style={{ width:44, height:44, borderRadius:'50%', border:`2px solid ${BRAND.green}`, background:BRAND.white, color:BRAND.green, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700 }}>
+                <Minus size={20}/>
+              </button>
+              <div style={{ textAlign:'center' }}>
+                <span style={{ fontSize:28, fontWeight:800, color:BRAND.dark }}>{selectQty}</span>
+                <span style={{ fontSize:14, color:BRAND.gray, marginLeft:4 }}>{selectedProduct.unit}</span>
+              </div>
+              <button onClick={() => setSelectQty(selectQty+1)}
+                style={{ width:44, height:44, borderRadius:'50%', border:'none', background:BRAND.green, color:BRAND.white, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <Plus size={20}/>
               </button>
             </div>
+
+            {/* 소계 */}
+            <div style={{ background:BRAND.greenPale, borderRadius:12, padding:'12px 16px', marginBottom:20, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <span style={{ fontSize:14, color:BRAND.dark, fontWeight:600 }}>소계</span>
+              <span style={{ fontSize:20, fontWeight:800, color:BRAND.green }}>{formatKRW(selectedProduct.price * selectQty)}</span>
+            </div>
+
+            <button
+              onClick={() => addToCart(selectedProduct, selectQty)}
+              style={{ width:'100%', padding:'18px', borderRadius:16, background:`linear-gradient(135deg,${BRAND.green},${BRAND.greenLight})`, color:BRAND.white, fontWeight:700, fontSize:17, border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}
+            >
+              <ShoppingCart size={20}/> 장바구니에 담기
+            </button>
           </div>
         </div>
       )}
