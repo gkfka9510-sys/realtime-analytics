@@ -161,3 +161,30 @@ export const retailSaleApi = {
     apiFetch(`/retail-sales/${id}`, { method: 'DELETE' }),
 };
 
+// ── 쇼핑몰 상품 API (관리자) ──
+export const shopProductApi = {
+  getAll: () => apiFetch('/shop/products/admin'),
+  save: (product: unknown) =>
+    apiFetch('/shop/products', { method: 'POST', body: JSON.stringify(product) }),
+  update: (id: string, product: unknown) =>
+    apiFetch(`/shop/products/${id}`, { method: 'PUT', body: JSON.stringify(product) }),
+  delete: (id: string) =>
+    apiFetch(`/shop/products/${id}`, { method: 'DELETE' }),
+};
+
+// ── 주문 API (관리자용) ──
+export const orderApi = {
+  getAll: (params?: { status?: string; from?: string; to?: string }) => {
+    const p = new URLSearchParams();
+    if (params?.status) p.set('status', params.status);
+    if (params?.from) p.set('from', params.from);
+    if (params?.to) p.set('to', params.to);
+    return apiFetch(`/orders?${p}`);
+  },
+  getStats: () => apiFetch('/orders/stats'),
+  updateStatus: (id: string, status: string) =>
+    apiFetch(`/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  delete: (id: string) =>
+    apiFetch(`/orders/${id}`, { method: 'DELETE' }),
+};
+

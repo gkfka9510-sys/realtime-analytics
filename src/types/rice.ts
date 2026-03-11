@@ -1,6 +1,62 @@
 // 쌀집 대시보드 타입 정의
 
 // ─────────────────────────────────────────────
+// 쇼핑몰 상품 (관리자 등록 → 주문 페이지 표시)
+// ─────────────────────────────────────────────
+export interface ShopProduct {
+  id: string;
+  name: string;
+  description: string;
+  unit: string;
+  unitOptions: string[];
+  price: number;
+  imageUrl: string;
+  isAvailable: boolean;
+  sortOrder: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ─────────────────────────────────────────────
+// 주문 (비회원 포함)
+// ─────────────────────────────────────────────
+export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'shipped' | 'delivered' | 'cancelled';
+
+export interface OrderItem {
+  id: string;
+  orderId: string;
+  productId?: string;
+  productName: string;
+  unit: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface Order {
+  id: string;
+  orderNo: string;
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+  deliveryDate: string;
+  totalAmount: number;
+  memo: string;
+  status: OrderStatus;
+  createdAt: string;
+  updatedAt: string;
+  items: OrderItem[];
+}
+
+export interface OrderStats {
+  todayCount: number;
+  todayAmount: number;
+  pendingCount: number;
+  totalCount: number;
+  totalAmount: number;
+}
+
+// ─────────────────────────────────────────────
 // 기초데이터
 // ─────────────────────────────────────────────
 
@@ -64,99 +120,6 @@ export interface RetailSale {
   paymentMethod: PaymentMethod; // 결제 방법
   memo?: string;
 }
-
-// ─────────────────────────────────────────────
-// 매출 데이터 (CSV에서 파싱 or 직접 입력)
-// ─────────────────────────────────────────────
-export type TransactionType = 'sale' | 'purchase' | 'receipt' | 'payment';
-// sale=매출, purchase=매입, receipt=수금, payment=지불
-
-export interface SalesRecord {
-  id: string;
-  date: string;              // YYYY-MM-DD
-  companyName: string;       // 업체명
-  productName: string;       // 품목명
-  quantity: number;          // 수량 (kg)
-  unitPrice: number;         // 단가
-  totalAmount: number;       // 합계금액 (공급가액)
-  memo?: string;             // 비고
-  transactionType?: TransactionType; // 거래 구분 (직접 입력 시)
-  unit?: string;             // 단위
-  customerId?: string;       // 연결된 거래처 ID
-  itemId?: string;           // 연결된 품목 ID
-}
-
-// ─────────────────────────────────────────────
-// 세금계산서
-// ─────────────────────────────────────────────
-export interface TaxInvoice {
-  id: string;
-  issueDate: string;      // 발행일 YYYY-MM-DD
-  companyName: string;    // 업체명
-  totalAmount: number;    // 합계금액
-  memo?: string;
-}
-
-// ─────────────────────────────────────────────
-// 쌀 원가 정보 (기존 - 순이익 계산용)
-// ─────────────────────────────────────────────
-export interface RiceProduct {
-  id: string;
-  name: string;           // 품명 (예: 신동진 20kg)
-  weightPerBag: number;   // 포대당 무게 (kg)
-  purchasePrice: number;  // 포대당 매입가 (원)
-  costPerKg: number;      // 1kg당 원가 (자동 계산)
-  sellingPricePerKg: number; // 1kg당 판매가
-}
-
-// ─────────────────────────────────────────────
-// 재고
-// ─────────────────────────────────────────────
-export interface InventoryItem {
-  id: string;
-  productId: string;
-  productName: string;
-  weightPerBag: number;   // kg/포대
-  currentStock: number;   // 현재 재고 (포대)
-  currentStockKg: number; // 현재 재고 (kg)
-  lastUpdated: string;
-}
-
-export interface InventoryTransaction {
-  id: string;
-  productId: string;
-  productName: string;
-  type: 'in' | 'out' | 'adjust'; // 입고/출고/조정
-  quantity: number;       // 포대 수
-  quantityKg: number;     // kg
-  date: string;
-  memo?: string;
-  relatedSaleId?: string;
-}
-
-// ─────────────────────────────────────────────
-// 순이익 계산 결과
-// ─────────────────────────────────────────────
-export interface ProfitData {
-  period: string;
-  totalRevenue: number;
-  totalCost: number;
-  grossProfit: number;
-  profitMargin: number;
-}
-
-// ─────────────────────────────────────────────
-// 세금계산서 미발행 업체
-// ─────────────────────────────────────────────
-export interface UnissuedTaxResult {
-  companyName: string;
-  month: string;          // YYYY-MM
-  salesCount: number;     // 매출 건수
-  totalSalesAmount: number; // 매출 합계
-  hasInvoice: boolean;
-  invoiceCount: number;
-}
-
 
 // ─────────────────────────────────────────────
 // 매출 데이터 (CSV에서 파싱 or 직접 입력)

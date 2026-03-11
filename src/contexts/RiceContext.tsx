@@ -3,9 +3,9 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { v4 as uuidv4 } from 'uuid';
 import {
   SalesRecord, TaxInvoice, RiceProduct, InventoryItem, InventoryTransaction,
-  Customer, Item, RetailCustomer, RetailSale,
+  Customer, Item, RetailCustomer, RetailSale, ShopProduct, Order, OrderStats, OrderStatus,
 } from '@/types/rice';
-import { salesApi, taxApi, productApi, inventoryApi, customerApi, itemApi, retailCustomerApi, retailSaleApi } from '@/lib/api';
+import { salesApi, taxApi, productApi, inventoryApi, customerApi, itemApi, retailCustomerApi, retailSaleApi, shopProductApi, orderApi } from '@/lib/api';
 
 interface RiceContextType {
   // 매출
@@ -52,6 +52,17 @@ interface RiceContextType {
   addRetailSale: (sale: Omit<RetailSale, 'id'>) => Promise<void>;
   updateRetailSale: (id: string, sale: Partial<RetailSale>) => Promise<void>;
   deleteRetailSale: (id: string) => Promise<void>;
+  // 쇼핑몰 상품 관리
+  shopProducts: ShopProduct[];
+  addShopProduct: (p: Omit<ShopProduct, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateShopProduct: (id: string, p: Partial<ShopProduct>) => Promise<void>;
+  deleteShopProduct: (id: string) => Promise<void>;
+  // 주문 관리
+  orders: Order[];
+  orderStats: OrderStats | null;
+  updateOrderStatus: (id: string, status: OrderStatus) => Promise<void>;
+  deleteOrder: (id: string) => Promise<void>;
+  refreshOrders: () => Promise<void>;
   // 공통
   refreshAll: () => Promise<void>;
   isLoading: boolean;
@@ -180,6 +191,54 @@ function mapRetailSale(r: Record<string, unknown>): RetailSale {
   };
 }
 
+function mapShopProduct(r: Record<string, unknown>): ShopProduct {
+  let unitOptions: string[] = [];
+  try { unitOptions = JSON.parse(r.unit_options as string || '[]'); } catch {}
+  return {
+    id: r.id as string,
+    name: r.name as string,
+    description: (r.description as string) || '',
+    unit: (r.unit as string) || 'kg',
+    unitOptions,
+    price: Number(r.price) || 0,
+    imageUrl: (r.image_url as string) || '',
+    isAvailable: Number(r.is_available) !== 0,
+    sortOrder: Number(r.sort_order) || 0,
+    createdAt: (r.created_at as string) || '',
+    updatedAt: (r.updated_at as string) || '',
+  };
+}
+
+function mapOrderItem(r: Record<string, unknown>) {
+  return {
+    id: r.id as string,
+    orderId: r.order_id as string,
+    productId: (r.product_id as string) || undefined,
+    productName: r.product_name as string,
+    unit: (r.unit as string) || 'kg',
+    quantity: Number(r.quantity) || 0,
+    unitPrice: Number(r.unit_price) || 0,
+    totalPrice: Number(r.total_price) || 0,
+  };
+}
+
+function mapOrder(r: Record<string, unknown>): Order {
+  return {
+    id: r.id as string,
+    orderNo: r.order_no as string,
+    customerName: r.customer_name as string,
+    customerPhone: r.customer_phone as string,
+    customerAddress: r.customer_address as string,
+    deliveryDate: r.delivery_date as string,
+    totalAmount: Number(r.total_amount) || 0,
+    memo: (r.memo as string) || '',
+    status: (r.status as Order['status']) || 'pending',
+    createdAt: (r.created_at as string) || '',
+    updatedAt: (r.updated_at as string) || '',
+    items: Array.isArray(r.items) ? (r.items as Record<string, unknown>[]).map(mapOrderItem) : [],
+  };
+}
+
 export const RiceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [salesRecords, setSalesRecordsState] = useState<SalesRecord[]>([]);
   const [taxInvoices, setTaxInvoicesState] = useState<TaxInvoice[]>([]);
@@ -190,12 +249,15 @@ export const RiceProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [items, setItems] = useState<Item[]>([]);
   const [retailCustomers, setRetailCustomers] = useState<RetailCustomer[]>([]);
   const [retailSales, setRetailSales] = useState<RetailSale[]>([]);
+  const [shopProducts, setShopProducts] = useState<ShopProduct[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [orderStats, setOrderStats] = useState<OrderStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshAll = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [sales, tax, products, inv, invTx, custs, itms, rCusts, rSales] = await Promise.all([
+      const [sales, tax, products, inv, invTx, custs, itms, rCusts, rSales, sProds, ords, oStats] = await Promise.all([
         salesApi.getAll().catch(() => []),
         taxApi.getAll().catch(() => []),
         productApi.getAll().catch(() => []),
@@ -205,6 +267,9 @@ export const RiceProvider: React.FC<{ children: React.ReactNode }> = ({ children
         itemApi.getAll().catch(() => []),
         retailCustomerApi.getAll().catch(() => []),
         retailSaleApi.getAll().catch(() => []),
+        shopProductApi.getAll().catch(() => []),
+        orderApi.getAll().catch(() => []),
+        orderApi.getStats().catch(() => null),
       ]);
       setSalesRecordsState((sales as Record<string, unknown>[]).map(mapSales));
       setTaxInvoicesState((tax as Record<string, unknown>[]).map(mapTax));
@@ -215,6 +280,9 @@ export const RiceProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setItems((itms as Record<string, unknown>[]).map(mapItem));
       setRetailCustomers((rCusts as Record<string, unknown>[]).map(mapRetailCustomer));
       setRetailSales((rSales as Record<string, unknown>[]).map(mapRetailSale));
+      setShopProducts((sProds as Record<string, unknown>[]).map(mapShopProduct));
+      setOrders((ords as Record<string, unknown>[]).map(mapOrder));
+      if (oStats) setOrderStats(oStats as OrderStats);
     } catch (err) {
       console.error('데이터 로드 오류:', err);
     }
@@ -427,6 +495,47 @@ export const RiceProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setRetailSales(prev => prev.filter(s => s.id !== id));
   }, []);
 
+  // 쇼핑몰 상품
+  const addShopProduct = useCallback(async (p: Omit<ShopProduct, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const id = uuidv4();
+    await shopProductApi.save({ id, ...p });
+    setShopProducts(prev => [...prev, { id, ...p, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }]);
+  }, []);
+
+  const updateShopProduct = useCallback(async (id: string, update: Partial<ShopProduct>) => {
+    await shopProductApi.update(id, update);
+    setShopProducts(prev => prev.map(p => p.id === id ? { ...p, ...update, updatedAt: new Date().toISOString() } : p));
+  }, []);
+
+  const deleteShopProduct = useCallback(async (id: string) => {
+    await shopProductApi.delete(id);
+    setShopProducts(prev => prev.filter(p => p.id !== id));
+  }, []);
+
+  // 주문 관리
+  const refreshOrders = useCallback(async () => {
+    try {
+      const [ords, oStats] = await Promise.all([
+        orderApi.getAll().catch(() => []),
+        orderApi.getStats().catch(() => null),
+      ]);
+      setOrders((ords as Record<string, unknown>[]).map(mapOrder));
+      if (oStats) setOrderStats(oStats as OrderStats);
+    } catch (err) {
+      console.error('주문 로드 오류:', err);
+    }
+  }, []);
+
+  const updateOrderStatus = useCallback(async (id: string, status: OrderStatus) => {
+    await orderApi.updateStatus(id, status);
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+  }, []);
+
+  const deleteOrder = useCallback(async (id: string) => {
+    await orderApi.delete(id);
+    setOrders(prev => prev.filter(o => o.id !== id));
+  }, []);
+
   return (
     <RiceContext.Provider value={{
       salesRecords, setSalesRecords, addSalesRecords, addSalesRecord, updateSalesRecord, deleteSalesRecord,
@@ -438,6 +547,8 @@ export const RiceProvider: React.FC<{ children: React.ReactNode }> = ({ children
       items, addItem, updateItem, deleteItem,
       retailCustomers, addRetailCustomer, updateRetailCustomer, deleteRetailCustomer,
       retailSales, addRetailSale, updateRetailSale, deleteRetailSale,
+      shopProducts, addShopProduct, updateShopProduct, deleteShopProduct,
+      orders, orderStats, updateOrderStatus, deleteOrder, refreshOrders,
       refreshAll, isLoading,
     }}>
       {children}

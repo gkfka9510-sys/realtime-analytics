@@ -201,6 +201,54 @@ db.exec(`
 
   -- 세금계산서 단건 등록 지원 (기존 bulk 외 단건)
   CREATE INDEX IF NOT EXISTS idx_tax_invoices_user ON tax_invoices(user_id, issue_date);
+
+  -- 쇼핑몰 판매 상품 (관리자 등록, 주문 페이지에 표시)
+  CREATE TABLE IF NOT EXISTS shop_products (
+    id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT DEFAULT '',
+    unit TEXT DEFAULT 'kg',
+    unit_options TEXT DEFAULT '[]',
+    price REAL NOT NULL DEFAULT 0,
+    image_url TEXT DEFAULT '',
+    is_available INTEGER DEFAULT 1,
+    sort_order INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now','localtime')),
+    updated_at TEXT DEFAULT (datetime('now','localtime'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_shop_products_user ON shop_products(user_id);
+
+  -- 주문 헤더
+  CREATE TABLE IF NOT EXISTS orders (
+    id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    order_no TEXT NOT NULL,
+    customer_name TEXT NOT NULL,
+    customer_phone TEXT NOT NULL,
+    customer_address TEXT NOT NULL,
+    delivery_date TEXT NOT NULL,
+    total_amount REAL DEFAULT 0,
+    memo TEXT DEFAULT '',
+    status TEXT DEFAULT 'pending',
+    created_at TEXT DEFAULT (datetime('now','localtime')),
+    updated_at TEXT DEFAULT (datetime('now','localtime'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id, created_at);
+  CREATE INDEX IF NOT EXISTS idx_orders_no ON orders(user_id, order_no);
+
+  -- 주문 상품 상세
+  CREATE TABLE IF NOT EXISTS order_items (
+    id TEXT PRIMARY KEY,
+    order_id TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id TEXT,
+    product_name TEXT NOT NULL,
+    unit TEXT DEFAULT 'kg',
+    quantity REAL NOT NULL DEFAULT 1,
+    unit_price REAL NOT NULL DEFAULT 0,
+    total_price REAL NOT NULL DEFAULT 0
+  );
+  CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
 `);
 
 // ──────────────────────────────────────────────────────
@@ -725,6 +773,198 @@ app.put('/api/retail-sales/:id', authMiddleware, (req, res) => {
 });
 app.delete('/api/retail-sales/:id', authMiddleware, (req, res) => {
   db.prepare('DELETE FROM retail_sales WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ deleted: true });
+});
+
+// ──────────────────────────────────────────────────────
+// 쇼핑몰 상품 라우트 (shop_products)
+// ──────────────────────────────────────────────────────
+
+// 공개 상품 목록 (인증 불필요 - 주문 페이지용)
+app.get('/api/shop/products', (req, res) => {
+  // user_id 파라미터로 특정 상점 상품 조회 (기본: 첫번째 사용자)
+  const { userId } = req.query;
+  let row;
+  if (userId) {
+    row = db.prepare('SELECT id FROM users WHERE id=?').get(userId);
+  } else {
+    row = db.prepare('SELECT id FROM users ORDER BY id LIMIT 1').get();
+  }
+  if (!row) return res.json([]);
+  const products = db.prepare(
+    'SELECT * FROM shop_products WHERE user_id=? AND is_available=1 ORDER BY sort_order ASC, name ASC'
+  ).all(row.id);
+  res.json(products);
+});
+
+// 관리자용 전체 상품 목록 (인증 필요)
+app.get('/api/shop/products/admin', authMiddleware, (req, res) => {
+  const products = db.prepare(
+    'SELECT * FROM shop_products WHERE user_id=? ORDER BY sort_order ASC, name ASC'
+  ).all(req.user.id);
+  res.json(products);
+});
+
+app.post('/api/shop/products', authMiddleware, (req, res) => {
+  const { id, name, description, unit, unitOptions, price, imageUrl, isAvailable, sortOrder } = req.body;
+  if (!id || !name || price == null) return res.status(400).json({ error: '필수 항목 누락' });
+  db.prepare(
+    "INSERT OR REPLACE INTO shop_products (id,user_id,name,description,unit,unit_options,price,image_url,is_available,sort_order,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime('now','localtime'))"
+  ).run(id, req.user.id, name, description||'', unit||'kg', JSON.stringify(unitOptions||[]), price, imageUrl||'', isAvailable!==false?1:0, sortOrder||0);
+  res.json({ ok: true });
+});
+
+app.put('/api/shop/products/:id', authMiddleware, (req, res) => {
+  const { name, description, unit, unitOptions, price, imageUrl, isAvailable, sortOrder } = req.body;
+  db.prepare(
+    "UPDATE shop_products SET name=?,description=?,unit=?,unit_options=?,price=?,image_url=?,is_available=?,sort_order=?,updated_at=datetime('now','localtime') WHERE id=? AND user_id=?"
+  ).run(name, description||'', unit||'kg', JSON.stringify(unitOptions||[]), price, imageUrl||'', isAvailable!==false?1:0, sortOrder||0, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+app.delete('/api/shop/products/:id', authMiddleware, (req, res) => {
+  db.prepare('DELETE FROM shop_products WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ deleted: true });
+});
+
+// ──────────────────────────────────────────────────────
+// 주문 라우트 (orders) — 비회원도 주문 가능
+// ──────────────────────────────────────────────────────
+
+// 주문 목록 (관리자용)
+app.get('/api/orders', authMiddleware, (req, res) => {
+  const { status, from, to, limit = 200 } = req.query;
+  let sql = 'SELECT * FROM orders WHERE user_id=?';
+  const params = [req.user.id];
+  if (status) { sql += ' AND status=?'; params.push(status); }
+  if (from) { sql += ' AND created_at>=?'; params.push(from); }
+  if (to) { sql += ' AND created_at<=?'; params.push(to + ' 23:59:59'); }
+  sql += ' ORDER BY created_at DESC LIMIT ?';
+  params.push(Number(limit));
+  const orders = db.prepare(sql).all(...params);
+  // 각 주문의 상품 목록 첨부
+  const result = orders.map(order => ({
+    ...order,
+    items: db.prepare('SELECT * FROM order_items WHERE order_id=?').all(order.id),
+  }));
+  res.json(result);
+});
+
+// 주문 통계 (관리자용)
+app.get('/api/orders/stats', authMiddleware, (req, res) => {
+  const today = new Date().toISOString().slice(0, 10);
+  const todayCount = db.prepare("SELECT COUNT(*) as c FROM orders WHERE user_id=? AND date(created_at)=?").get(req.user.id, today).c;
+  const todayAmount = db.prepare("SELECT COALESCE(SUM(total_amount),0) as s FROM orders WHERE user_id=? AND date(created_at)=?").get(req.user.id, today).s;
+  const pendingCount = db.prepare("SELECT COUNT(*) as c FROM orders WHERE user_id=? AND status='pending'").get(req.user.id).c;
+  const totalCount = db.prepare('SELECT COUNT(*) as c FROM orders WHERE user_id=?').get(req.user.id).c;
+  const totalAmount = db.prepare('SELECT COALESCE(SUM(total_amount),0) as s FROM orders WHERE user_id=?').get(req.user.id).s;
+  res.json({ todayCount, todayAmount, pendingCount, totalCount, totalAmount });
+});
+
+// 비회원 주문 생성 (인증 불필요 - 주문 페이지용)
+app.post('/api/shop/orders', (req, res) => {
+  const { customerName, customerPhone, customerAddress, deliveryDate, items, memo, userId } = req.body;
+  if (!customerName || !customerPhone || !customerAddress || !deliveryDate || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: '필수 항목이 누락되었습니다.' });
+  }
+
+  // 어느 사용자(상점)에 주문할지 결정
+  let targetUserId;
+  if (userId) {
+    const u = db.prepare('SELECT id FROM users WHERE id=?').get(userId);
+    if (!u) return res.status(400).json({ error: '존재하지 않는 상점입니다.' });
+    targetUserId = u.id;
+  } else {
+    const u = db.prepare('SELECT id FROM users ORDER BY id LIMIT 1').get();
+    if (!u) return res.status(400).json({ error: '상점 정보를 찾을 수 없습니다.' });
+    targetUserId = u.id;
+  }
+
+  const orderId = crypto.randomUUID();
+  // 주문번호: ORD-YYYYMMDD-4자리랜덤
+  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const orderNo = `ORD-${dateStr}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+
+  const totalAmount = items.reduce((sum, item) => sum + (item.totalPrice || item.unitPrice * item.quantity), 0);
+
+  const insertOrder = db.transaction(() => {
+    db.prepare(
+      "INSERT INTO orders (id,user_id,order_no,customer_name,customer_phone,customer_address,delivery_date,total_amount,memo,status) VALUES (?,?,?,?,?,?,?,?,?,'pending')"
+    ).run(orderId, targetUserId, orderNo, customerName, customerPhone, customerAddress, deliveryDate, totalAmount, memo||'');
+
+    const insertItem = db.prepare(
+      'INSERT INTO order_items (id,order_id,product_id,product_name,unit,quantity,unit_price,total_price) VALUES (?,?,?,?,?,?,?,?)'
+    );
+    for (const item of items) {
+      insertItem.run(
+        crypto.randomUUID(), orderId,
+        item.productId || null,
+        item.productName,
+        item.unit || 'kg',
+        item.quantity,
+        item.unitPrice,
+        item.totalPrice || item.unitPrice * item.quantity
+      );
+    }
+
+    // 주문자를 소매 단골 고객에 자동 등록/업데이트
+    const existingRetail = db.prepare(
+      'SELECT id FROM retail_customers WHERE user_id=? AND phone=?'
+    ).get(targetUserId, customerPhone);
+
+    if (!existingRetail) {
+      const rcId = crypto.randomUUID();
+      db.prepare(
+        "INSERT INTO retail_customers (id,user_id,name,phone,address,grade,memo,updated_at) VALUES (?,?,?,?,?,'regular','온라인 주문 자동 등록',datetime('now','localtime'))"
+      ).run(rcId, targetUserId, customerName, customerPhone, customerAddress);
+    } else {
+      // 주소가 있으면 업데이트
+      db.prepare(
+        "UPDATE retail_customers SET name=?,address=?,updated_at=datetime('now','localtime') WHERE id=? AND user_id=?"
+      ).run(customerName, customerAddress, existingRetail.id, targetUserId);
+    }
+
+    // 매출 데이터에도 반영 (sales_records에 주문 건 추가)
+    const today = new Date().toISOString().slice(0, 10);
+    for (const item of items) {
+      const saleId = crypto.randomUUID();
+      db.prepare(
+        "INSERT INTO sales_records (id,user_id,date,company_name,product_name,quantity,unit,unit_price,total_amount,memo,transaction_type) VALUES (?,?,?,?,?,?,?,?,?,'온라인주문: ' || ?,'sale')"
+      ).run(
+        saleId, targetUserId, today,
+        customerName,
+        item.productName,
+        item.quantity,
+        item.unit || 'kg',
+        item.unitPrice,
+        item.totalPrice || item.unitPrice * item.quantity,
+        orderNo
+      );
+    }
+  });
+
+  try {
+    insertOrder();
+    res.json({ orderId, orderNo, totalAmount });
+  } catch (err) {
+    console.error('주문 생성 오류:', err);
+    res.status(500).json({ error: '주문 처리 중 오류가 발생했습니다.' });
+  }
+});
+
+// 주문 상태 변경 (관리자용)
+app.put('/api/orders/:id/status', authMiddleware, (req, res) => {
+  const { status } = req.body;
+  const validStatuses = ['pending', 'confirmed', 'preparing', 'shipped', 'delivered', 'cancelled'];
+  if (!validStatuses.includes(status)) return res.status(400).json({ error: '유효하지 않은 상태입니다.' });
+  db.prepare("UPDATE orders SET status=?,updated_at=datetime('now','localtime') WHERE id=? AND user_id=?")
+    .run(status, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+// 주문 삭제 (관리자용)
+app.delete('/api/orders/:id', authMiddleware, (req, res) => {
+  db.prepare('DELETE FROM orders WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
   res.json({ deleted: true });
 });
 

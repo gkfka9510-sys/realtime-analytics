@@ -8,25 +8,29 @@ import TaxInvoicePage from '@/pages/TaxInvoicePage';
 import SettingsPage from '@/pages/SettingsPage';
 import MasterDataPage from '@/pages/MasterDataPage';
 import RetailCustomerPage from '@/pages/RetailCustomerPage';
+import ShopProductPage from '@/pages/ShopProductPage';
+import OrderManagePage from '@/pages/OrderManagePage';
 import {
   TrendingUp, DollarSign, Package, FileText, Bell, Menu, X,
   BarChart2, ShoppingCart, AlertTriangle, ChevronRight, Settings, Loader2,
-  Building2, Users, Clock, Crown, Star, Heart
+  Building2, Users, Clock, Crown, Star, Heart, Store, ClipboardList
 } from 'lucide-react';
 
 const formatKRW = (v: number) => `₩${v.toLocaleString('ko-KR')}`;
 
-type TabId = 'overview' | 'master' | 'sales' | 'profit' | 'inventory' | 'tax' | 'retail' | 'settings';
+type TabId = 'overview' | 'master' | 'sales' | 'profit' | 'inventory' | 'tax' | 'retail' | 'shop' | 'orders' | 'settings';
 
 const TABS: { id: TabId; label: string; icon: React.ElementType; color: string }[] = [
-  { id: 'overview',  label: '홈',        icon: BarChart2,  color: '#00d9ff' },
-  { id: 'master',    label: '기초데이터', icon: Building2,  color: '#a78bfa' },
-  { id: 'sales',     label: '매출 관리',  icon: TrendingUp, color: '#00d9ff' },
-  { id: 'profit',    label: '순이익',     icon: DollarSign, color: '#10b981' },
-  { id: 'inventory', label: '재고 현황',  icon: Package,    color: '#f59e0b' },
-  { id: 'tax',       label: '세금계산서', icon: FileText,   color: '#7c3aed' },
-  { id: 'retail',    label: '단골 고객',  icon: Heart,      color: '#f472b6' },
-  { id: 'settings',  label: '설정',       icon: Settings,   color: '#6b7280' },
+  { id: 'overview',  label: '홈',        icon: BarChart2,     color: '#00d9ff' },
+  { id: 'master',    label: '기초데이터', icon: Building2,     color: '#a78bfa' },
+  { id: 'sales',     label: '매출 관리',  icon: TrendingUp,    color: '#00d9ff' },
+  { id: 'profit',    label: '순이익',     icon: DollarSign,    color: '#10b981' },
+  { id: 'inventory', label: '재고 현황',  icon: Package,       color: '#f59e0b' },
+  { id: 'tax',       label: '세금계산서', icon: FileText,      color: '#7c3aed' },
+  { id: 'retail',    label: '단골 고객',  icon: Heart,         color: '#f472b6' },
+  { id: 'shop',      label: '상품 관리',  icon: Store,         color: '#34d399' },
+  { id: 'orders',    label: '주문 관리',  icon: ClipboardList, color: '#fb923c' },
+  { id: 'settings',  label: '설정',       icon: Settings,      color: '#6b7280' },
 ];
 
 interface Props {
@@ -40,7 +44,7 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const {
     salesRecords, riceProducts, inventory, taxInvoices,
-    customers, items, retailCustomers, retailSales, isLoading
+    customers, items, retailCustomers, retailSales, orders, isLoading
   } = useRice();
 
   // 이번달 통계
@@ -96,6 +100,9 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
     }).length;
   }, [retailCustomers, retailSales]);
 
+  // 대기 중인 주문 수
+  const pendingOrderCount = useMemo(() => orders.filter(o => o.status === 'pending').length, [orders]);
+
   // 로딩 스피너
   if (isLoading) {
     return (
@@ -114,7 +121,7 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
       </div>
 
       {/* 주요 지표 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
           {
             label: '이번달 매출', value: formatKRW(thisMonth.revenue),
@@ -138,6 +145,12 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
             sub: thisMonth.unissuedCount > 0 ? '⚠️ 확인 필요' : '✅ 모두 발행됨',
             subColor: thisMonth.unissuedCount > 0 ? 'text-red-400' : 'text-green-400',
             color: thisMonth.unissuedCount > 0 ? '#ef4444' : '#10b981', icon: FileText, onClick: () => setActiveTab('tax'),
+          },
+          {
+            label: '대기 주문', value: `${pendingOrderCount}건`,
+            sub: orders.length > 0 ? `총 ${orders.length}건 접수` : '주문 없음',
+            subColor: pendingOrderCount > 0 ? 'text-orange-400' : 'text-gray-400',
+            color: pendingOrderCount > 0 ? '#fb923c' : '#6b7280', icon: ClipboardList, onClick: () => setActiveTab('orders'),
           },
         ].map((card, i) => (
           <div key={i} onClick={card.onClick}
@@ -202,12 +215,25 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
       )}
 
       {/* 경고 알림 */}
-      {(lowStockItems.length > 0 || thisMonth.unissuedCount > 0) && (
+      {(lowStockItems.length > 0 || thisMonth.unissuedCount > 0 || pendingOrderCount > 0) && (
         <div className="space-y-2">
           <h3 className="text-white font-semibold flex items-center gap-2">
             <AlertTriangle size={18} className="text-yellow-400" />
             주의 사항
           </h3>
+          {pendingOrderCount > 0 && (
+            <div className="flex items-center justify-between p-4 bg-orange-500/10 border border-orange-500/30 rounded-xl cursor-pointer hover:bg-orange-500/15 transition-colors"
+              onClick={() => setActiveTab('orders')}>
+              <div className="flex items-center gap-3">
+                <ClipboardList size={18} className="text-orange-400" />
+                <div>
+                  <p className="text-white text-sm font-medium">대기 중인 주문 {pendingOrderCount}건</p>
+                  <p className="text-gray-400 text-xs">처리가 필요합니다</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-orange-400" />
+            </div>
+          )}
           {thisMonth.unissuedCount > 0 && (
             <div className="flex items-center justify-between p-4 bg-red-500/10 border border-red-500/30 rounded-xl cursor-pointer hover:bg-red-500/15 transition-colors"
               onClick={() => setActiveTab('tax')}>
@@ -285,6 +311,7 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
               { step: '3', text: '매출 관리 탭에서 CSV 업로드 또는 직접 입력하세요', tab: 'sales' as TabId },
               { step: '4', text: '재고 현황 탭에서 현재 재고를 설정하세요', tab: 'inventory' as TabId },
               { step: '5', text: '단골 고객 탭에서 소매 고객을 등록하고 구매 이력을 관리하세요', tab: 'retail' as TabId },
+              { step: '6', text: '상품 관리 탭에서 주문 페이지에 표시할 상품을 등록하세요', tab: 'shop' as TabId },
             ].map(item => (
               <div key={item.step} onClick={() => setActiveTab(item.tab)}
                 className="flex items-start gap-3 p-3 rounded-lg hover:bg-[#3d4362] cursor-pointer transition-colors group">
@@ -350,6 +377,11 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
                     {retailReminderCount}
                   </span>
                 )}
+                {tab.id === 'orders' && pendingOrderCount > 0 && (
+                  <span className="ml-auto bg-orange-400 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                    {pendingOrderCount}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -393,6 +425,13 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
                 <span className="hidden sm:inline">재구매 </span>{retailReminderCount}명
               </button>
             )}
+            {pendingOrderCount > 0 && (
+              <button onClick={() => setActiveTab('orders')}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-orange-400/20 text-orange-400 rounded-lg text-xs font-medium hover:bg-orange-400/30 transition-colors">
+                <ClipboardList size={12} />
+                <span className="hidden sm:inline">주문 </span>{pendingOrderCount}건
+              </button>
+            )}
             <button onClick={() => setActiveTab('settings')}
               className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00d9ff] to-[#7c3aed] flex items-center justify-center text-sm hover:scale-110 transition-transform flex-shrink-0"
               title={`${displayName} 설정`}
@@ -410,6 +449,8 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
           {activeTab === 'inventory' && <InventoryPage />}
           {activeTab === 'tax'       && <TaxInvoicePage />}
           {activeTab === 'retail'    && <RetailCustomerPage />}
+          {activeTab === 'shop'      && <ShopProductPage />}
+          {activeTab === 'orders'    && <OrderManagePage />}
           {activeTab === 'settings'  && (
             <SettingsPage onLogout={onLogout} username={username} displayName={displayName} />
           )}
