@@ -49,6 +49,39 @@ db.exec(`
     last_login TEXT
   );
 
+  -- 거래처 테이블
+  CREATE TABLE IF NOT EXISTS customers (
+    id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    phone TEXT,
+    biz_no TEXT,
+    address TEXT,
+    ceo_name TEXT,
+    biz_type TEXT,
+    biz_item TEXT,
+    email TEXT,
+    memo TEXT,
+    created_at TEXT DEFAULT (datetime('now','localtime')),
+    updated_at TEXT DEFAULT (datetime('now','localtime'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_customers_user ON customers(user_id);
+
+  -- 품목 테이블 (기초데이터)
+  CREATE TABLE IF NOT EXISTS items (
+    id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    spec TEXT,
+    unit TEXT NOT NULL DEFAULT 'kg',
+    stock REAL DEFAULT 0,
+    cost_price REAL DEFAULT 0,
+    memo TEXT,
+    created_at TEXT DEFAULT (datetime('now','localtime')),
+    updated_at TEXT DEFAULT (datetime('now','localtime'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_items_user ON items(user_id);
+
   -- 매출 데이터
   CREATE TABLE IF NOT EXISTS sales_records (
     id TEXT PRIMARY KEY,
@@ -57,9 +90,13 @@ db.exec(`
     company_name TEXT NOT NULL,
     product_name TEXT,
     quantity REAL DEFAULT 0,
+    unit TEXT DEFAULT 'kg',
     unit_price REAL DEFAULT 0,
     total_amount REAL DEFAULT 0,
     memo TEXT,
+    transaction_type TEXT DEFAULT 'sale',
+    customer_id TEXT,
+    item_id TEXT,
     created_at TEXT DEFAULT (datetime('now','localtime'))
   );
   CREATE INDEX IF NOT EXISTS idx_sales_user_date ON sales_records(user_id, date);
@@ -313,6 +350,31 @@ app.get('/api/sales', authMiddleware, (req, res) => {
   res.json(db.prepare(sql).all(...params));
 });
 
+// 매출 단건 입력
+app.post('/api/sales', authMiddleware, (req, res) => {
+  const { id, date, companyName, productName, quantity, unit, unitPrice, totalAmount, memo, transactionType, customerId, itemId } = req.body;
+  if (!id || !date || !companyName) return res.status(400).json({ error: '필수 항목이 누락되었습니다.' });
+  db.prepare(
+    'INSERT OR REPLACE INTO sales_records (id,user_id,date,company_name,product_name,quantity,unit,unit_price,total_amount,memo,transaction_type,customer_id,item_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)'
+  ).run(id, req.user.id, date, companyName, productName || '', quantity || 0, unit || 'kg', unitPrice || 0, totalAmount || 0, memo || '', transactionType || 'sale', customerId || null, itemId || null);
+  res.json({ id });
+});
+
+// 매출 수정
+app.put('/api/sales/:id', authMiddleware, (req, res) => {
+  const { date, companyName, productName, quantity, unit, unitPrice, totalAmount, memo, transactionType, customerId, itemId } = req.body;
+  db.prepare(
+    'UPDATE sales_records SET date=?,company_name=?,product_name=?,quantity=?,unit=?,unit_price=?,total_amount=?,memo=?,transaction_type=?,customer_id=?,item_id=? WHERE id=? AND user_id=?'
+  ).run(date, companyName, productName || '', quantity || 0, unit || 'kg', unitPrice || 0, totalAmount || 0, memo || '', transactionType || 'sale', customerId || null, itemId || null, req.params.id, req.user.id);
+  res.json({ updated: true });
+});
+
+// 매출 단건 삭제
+app.delete('/api/sales/:id', authMiddleware, (req, res) => {
+  db.prepare('DELETE FROM sales_records WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ deleted: true });
+});
+
 app.post('/api/sales/bulk', authMiddleware, (req, res) => {
   const { records } = req.body;
   if (!Array.isArray(records) || records.length === 0)
@@ -324,12 +386,16 @@ app.post('/api/sales/bulk', authMiddleware, (req, res) => {
     return res.status(413).json({ error: `매출 데이터 한도 초과 (최대 ${STORAGE_LIMITS.MAX_SALES_RECORDS.toLocaleString()}건)` });
 
   const insert = db.prepare(
-    'INSERT OR IGNORE INTO sales_records (id,user_id,date,company_name,product_name,quantity,unit_price,total_amount,memo) VALUES (?,?,?,?,?,?,?,?,?)'
+    'INSERT OR IGNORE INTO sales_records (id,user_id,date,company_name,product_name,quantity,unit,unit_price,total_amount,memo,transaction_type,customer_id,item_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)'
   );
   const insertMany = db.transaction((rows) => {
     let inserted = 0;
     for (const r of rows) {
-      const result = insert.run(r.id, req.user.id, r.date, r.companyName, r.productName, r.quantity, r.unitPrice, r.totalAmount, r.memo || '');
+      const result = insert.run(
+        r.id, req.user.id, r.date, r.companyName, r.productName || '',
+        r.quantity || 0, r.unit || 'kg', r.unitPrice || 0, r.totalAmount || 0,
+        r.memo || '', r.transactionType || 'sale', r.customerId || null, r.itemId || null
+      );
       inserted += result.changes;
     }
     return inserted;
@@ -483,6 +549,68 @@ app.post('/api/inventory/transactions', authMiddleware, (req, res) => {
     'INSERT INTO inventory_transactions (id,user_id,product_id,product_name,type,quantity,quantity_kg,date,memo) VALUES (?,?,?,?,?,?,?,?,?)'
   ).run(id || crypto.randomUUID(), req.user.id, productId, productName, type, quantity, quantityKg, date, memo || '');
   res.json({ inserted: true });
+});
+
+// ──────────────────────────────────────────────────────
+// 거래처 라우트
+// ──────────────────────────────────────────────────────
+
+app.get('/api/customers', authMiddleware, (req, res) => {
+  res.json(db.prepare('SELECT * FROM customers WHERE user_id=? ORDER BY name').all(req.user.id));
+});
+
+app.post('/api/customers', authMiddleware, (req, res) => {
+  const { id, name, phone, bizNo, address, ceoName, bizType, bizItem, email, memo } = req.body;
+  if (!id || !name) return res.status(400).json({ error: '거래처명은 필수입니다.' });
+  db.prepare(
+    'INSERT OR REPLACE INTO customers (id,user_id,name,phone,biz_no,address,ceo_name,biz_type,biz_item,email,memo,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,datetime(\'now\',\'localtime\'))'
+  ).run(id, req.user.id, name, phone || '', bizNo || '', address || '', ceoName || '', bizType || '', bizItem || '', email || '', memo || '');
+  res.json({ id });
+});
+
+app.put('/api/customers/:id', authMiddleware, (req, res) => {
+  const { name, phone, bizNo, address, ceoName, bizType, bizItem, email, memo } = req.body;
+  if (!name) return res.status(400).json({ error: '거래처명은 필수입니다.' });
+  db.prepare(
+    "UPDATE customers SET name=?,phone=?,biz_no=?,address=?,ceo_name=?,biz_type=?,biz_item=?,email=?,memo=?,updated_at=datetime('now','localtime') WHERE id=? AND user_id=?"
+  ).run(name, phone || '', bizNo || '', address || '', ceoName || '', bizType || '', bizItem || '', email || '', memo || '', req.params.id, req.user.id);
+  res.json({ updated: true });
+});
+
+app.delete('/api/customers/:id', authMiddleware, (req, res) => {
+  db.prepare('DELETE FROM customers WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ deleted: true });
+});
+
+// ──────────────────────────────────────────────────────
+// 품목(기초데이터) 라우트
+// ──────────────────────────────────────────────────────
+
+app.get('/api/items', authMiddleware, (req, res) => {
+  res.json(db.prepare('SELECT * FROM items WHERE user_id=? ORDER BY name').all(req.user.id));
+});
+
+app.post('/api/items', authMiddleware, (req, res) => {
+  const { id, name, spec, unit, stock, costPrice, memo } = req.body;
+  if (!id || !name) return res.status(400).json({ error: '품명은 필수입니다.' });
+  db.prepare(
+    'INSERT OR REPLACE INTO items (id,user_id,name,spec,unit,stock,cost_price,memo,updated_at) VALUES (?,?,?,?,?,?,?,?,datetime(\'now\',\'localtime\'))'
+  ).run(id, req.user.id, name, spec || '', unit || 'kg', stock || 0, costPrice || 0, memo || '');
+  res.json({ id });
+});
+
+app.put('/api/items/:id', authMiddleware, (req, res) => {
+  const { name, spec, unit, stock, costPrice, memo } = req.body;
+  if (!name) return res.status(400).json({ error: '품명은 필수입니다.' });
+  db.prepare(
+    "UPDATE items SET name=?,spec=?,unit=?,stock=?,cost_price=?,memo=?,updated_at=datetime('now','localtime') WHERE id=? AND user_id=?"
+  ).run(name, spec || '', unit || 'kg', stock || 0, costPrice || 0, memo || '', req.params.id, req.user.id);
+  res.json({ updated: true });
+});
+
+app.delete('/api/items/:id', authMiddleware, (req, res) => {
+  db.prepare('DELETE FROM items WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  res.json({ deleted: true });
 });
 
 // ──────────────────────────────────────────────────────

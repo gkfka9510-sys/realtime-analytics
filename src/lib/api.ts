@@ -58,8 +58,14 @@ export const salesApi = {
     if (to) params.set('to', to);
     return apiFetch(`/sales?${params}`);
   },
+  insert: (record: unknown) =>
+    apiFetch('/sales', { method: 'POST', body: JSON.stringify(record) }),
   bulkInsert: (records: unknown[]) =>
     apiFetch('/sales/bulk', { method: 'POST', body: JSON.stringify({ records }) }),
+  update: (id: string, record: unknown) =>
+    apiFetch(`/sales/${id}`, { method: 'PUT', body: JSON.stringify(record) }),
+  delete: (id: string) =>
+    apiFetch(`/sales/${id}`, { method: 'DELETE' }),
   deleteAll: () =>
     apiFetch('/sales/all', { method: 'DELETE' }),
 };
@@ -73,7 +79,7 @@ export const taxApi = {
     apiFetch('/tax-invoices/all', { method: 'DELETE' }),
 };
 
-// ── 품목/원가 API ──
+// ── 품목/원가 API (쌀 원가 - 기존) ──
 export const productApi = {
   getAll: () => apiFetch('/products'),
   save: (product: unknown) =>
@@ -82,6 +88,28 @@ export const productApi = {
     apiFetch(`/products/${id}`, { method: 'PUT', body: JSON.stringify(product) }),
   delete: (id: string) =>
     apiFetch(`/products/${id}`, { method: 'DELETE' }),
+};
+
+// ── 거래처 API ──
+export const customerApi = {
+  getAll: () => apiFetch('/customers'),
+  save: (customer: unknown) =>
+    apiFetch('/customers', { method: 'POST', body: JSON.stringify(customer) }),
+  update: (id: string, customer: unknown) =>
+    apiFetch(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(customer) }),
+  delete: (id: string) =>
+    apiFetch(`/customers/${id}`, { method: 'DELETE' }),
+};
+
+// ── 품목 API (기초데이터 - 신규) ──
+export const itemApi = {
+  getAll: () => apiFetch('/items'),
+  save: (item: unknown) =>
+    apiFetch('/items', { method: 'POST', body: JSON.stringify(item) }),
+  update: (id: string, item: unknown) =>
+    apiFetch(`/items/${id}`, { method: 'PUT', body: JSON.stringify(item) }),
+  delete: (id: string) =>
+    apiFetch(`/items/${id}`, { method: 'DELETE' }),
 };
 
 // ── 재고 API ──

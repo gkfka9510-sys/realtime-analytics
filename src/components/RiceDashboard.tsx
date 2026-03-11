@@ -6,18 +6,21 @@ import ProfitPage from '@/pages/ProfitPage';
 import InventoryPage from '@/pages/InventoryPage';
 import TaxInvoicePage from '@/pages/TaxInvoicePage';
 import SettingsPage from '@/pages/SettingsPage';
+import MasterDataPage from '@/pages/MasterDataPage';
 import {
   TrendingUp, DollarSign, Package, FileText, Bell, Menu, X,
-  BarChart2, ShoppingCart, AlertTriangle, ChevronRight, Settings, Loader2
+  BarChart2, ShoppingCart, AlertTriangle, ChevronRight, Settings, Loader2,
+  Building2
 } from 'lucide-react';
 
 const formatKRW = (v: number) => `₩${v.toLocaleString('ko-KR')}`;
 
-type TabId = 'overview' | 'sales' | 'profit' | 'inventory' | 'tax' | 'settings';
+type TabId = 'overview' | 'master' | 'sales' | 'profit' | 'inventory' | 'tax' | 'settings';
 
 const TABS: { id: TabId; label: string; icon: React.ElementType; color: string }[] = [
   { id: 'overview', label: '홈', icon: BarChart2, color: '#00d9ff' },
-  { id: 'sales', label: '매출 현황', icon: TrendingUp, color: '#00d9ff' },
+  { id: 'master', label: '기초데이터', icon: Building2, color: '#a78bfa' },
+  { id: 'sales', label: '매출 관리', icon: TrendingUp, color: '#00d9ff' },
   { id: 'profit', label: '순이익', icon: DollarSign, color: '#10b981' },
   { id: 'inventory', label: '재고 현황', icon: Package, color: '#f59e0b' },
   { id: 'tax', label: '세금계산서', icon: FileText, color: '#7c3aed' },
@@ -33,7 +36,7 @@ interface Props {
 export default function RiceDashboard({ username, displayName, onLogout }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { salesRecords, riceProducts, inventory, taxInvoices, isLoading } = useRice();
+  const { salesRecords, riceProducts, inventory, taxInvoices, customers, items, isLoading } = useRice();
 
   // 이번달 통계
   const thisMonth = useMemo(() => {
@@ -168,6 +171,28 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
         </div>
       )}
 
+      {/* 기초데이터 현황 */}
+      {(customers.length > 0 || items.length > 0) && (
+        <div className="grid grid-cols-2 gap-3">
+          <div onClick={() => setActiveTab('master')}
+            className="bg-[#2d3142] rounded-xl p-4 border border-[#3d4362] cursor-pointer hover:border-[#a78bfa]/50 transition-all">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-gray-400 text-xs">등록 거래처</span>
+              <Building2 size={15} className="text-[#a78bfa]" />
+            </div>
+            <div className="text-[#a78bfa] font-bold text-xl">{customers.length}개사</div>
+          </div>
+          <div onClick={() => setActiveTab('master')}
+            className="bg-[#2d3142] rounded-xl p-4 border border-[#3d4362] cursor-pointer hover:border-[#a78bfa]/50 transition-all">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-gray-400 text-xs">등록 품목</span>
+              <Package size={15} className="text-[#a78bfa]" />
+            </div>
+            <div className="text-[#a78bfa] font-bold text-xl">{items.length}개</div>
+          </div>
+        </div>
+      )}
+
       {/* 빠른 이동 */}
       <div>
         <h3 className="text-white font-semibold mb-3">빠른 이동</h3>
@@ -189,9 +214,9 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
           <h3 className="text-white font-semibold mb-4">🚀 시작하기</h3>
           <div className="space-y-3">
             {[
-              { step: '1', text: '순이익 탭에서 취급 품목(쌀 종류)과 원가를 등록하세요', tab: 'profit' as TabId },
-              { step: '2', text: '매출 현황 탭에서 매출 CSV 파일을 업로드하세요', tab: 'sales' as TabId },
-              { step: '3', text: '매출 현황 탭에서 세금계산서 CSV 파일을 업로드하세요', tab: 'sales' as TabId },
+              { step: '1', text: '기초데이터 탭에서 거래처와 품목을 먼저 등록하세요', tab: 'master' as TabId },
+              { step: '2', text: '순이익 탭에서 취급 품목(쌀 종류)과 원가를 등록하세요', tab: 'profit' as TabId },
+              { step: '3', text: '매출 관리 탭에서 CSV 업로드 또는 직접 입력하세요', tab: 'sales' as TabId },
               { step: '4', text: '재고 현황 탭에서 현재 재고를 설정하세요', tab: 'inventory' as TabId },
             ].map(item => (
               <div key={item.step} onClick={() => setActiveTab(item.tab)}
@@ -300,6 +325,7 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
 
         <main className="flex-1 p-4 md:p-6 overflow-auto">
           {activeTab === 'overview' && <OverviewPage />}
+          {activeTab === 'master' && <MasterDataPage />}
           {activeTab === 'sales' && <SalesPage />}
           {activeTab === 'profit' && <ProfitPage />}
           {activeTab === 'inventory' && <InventoryPage />}

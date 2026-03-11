@@ -1,18 +1,60 @@
 // 쌀집 대시보드 타입 정의
 
-// 매출 데이터 (CSV에서 파싱)
-export interface SalesRecord {
+// ─────────────────────────────────────────────
+// 기초데이터
+// ─────────────────────────────────────────────
+
+// 거래처 (Customer)
+export interface Customer {
   id: string;
-  date: string;           // YYYY-MM-DD
-  companyName: string;    // 업체명
-  productName: string;    // 품목명
-  quantity: number;       // 수량 (kg)
-  unitPrice: number;      // 단가
-  totalAmount: number;    // 합계금액
-  memo?: string;          // 비고
+  name: string;           // 거래처명 *
+  phone?: string;         // 연락처
+  bizNo?: string;         // 사업자등록번호
+  address?: string;       // 사업장 소재지
+  ceoName?: string;       // 대표자명
+  bizType?: string;       // 업태
+  bizItem?: string;       // 업종
+  email?: string;         // 이메일
+  memo?: string;          // 메모
+  createdAt?: string;
 }
 
-// 세금계산서 데이터 (CSV에서 파싱)
+// 품목 (Item/Product)
+export interface Item {
+  id: string;
+  name: string;           // 품명 *
+  spec?: string;          // 규격 (예: 20kg, 1등급)
+  unit: string;           // 단위 (예: kg, 포대, 박스)
+  stock: number;          // 현재 재고 수량
+  costPrice: number;      // 원가 (단가)
+  memo?: string;
+  createdAt?: string;
+}
+
+// ─────────────────────────────────────────────
+// 매출 데이터 (CSV에서 파싱 or 직접 입력)
+// ─────────────────────────────────────────────
+export type TransactionType = 'sale' | 'purchase' | 'receipt' | 'payment';
+// sale=매출, purchase=매입, receipt=수금, payment=지불
+
+export interface SalesRecord {
+  id: string;
+  date: string;              // YYYY-MM-DD
+  companyName: string;       // 업체명
+  productName: string;       // 품목명
+  quantity: number;          // 수량 (kg)
+  unitPrice: number;         // 단가
+  totalAmount: number;       // 합계금액 (공급가액)
+  memo?: string;             // 비고
+  transactionType?: TransactionType; // 거래 구분 (직접 입력 시)
+  unit?: string;             // 단위
+  customerId?: string;       // 연결된 거래처 ID
+  itemId?: string;           // 연결된 품목 ID
+}
+
+// ─────────────────────────────────────────────
+// 세금계산서
+// ─────────────────────────────────────────────
 export interface TaxInvoice {
   id: string;
   issueDate: string;      // 발행일 YYYY-MM-DD
@@ -21,7 +63,9 @@ export interface TaxInvoice {
   memo?: string;
 }
 
-// 쌀 원가 정보
+// ─────────────────────────────────────────────
+// 쌀 원가 정보 (기존 - 순이익 계산용)
+// ─────────────────────────────────────────────
 export interface RiceProduct {
   id: string;
   name: string;           // 품명 (예: 신동진 20kg)
@@ -31,7 +75,9 @@ export interface RiceProduct {
   sellingPricePerKg: number; // 1kg당 판매가
 }
 
-// 재고 항목
+// ─────────────────────────────────────────────
+// 재고
+// ─────────────────────────────────────────────
 export interface InventoryItem {
   id: string;
   productId: string;
@@ -42,7 +88,6 @@ export interface InventoryItem {
   lastUpdated: string;
 }
 
-// 재고 변동 이력
 export interface InventoryTransaction {
   id: string;
   productId: string;
@@ -55,7 +100,9 @@ export interface InventoryTransaction {
   relatedSaleId?: string;
 }
 
+// ─────────────────────────────────────────────
 // 순이익 계산 결과
+// ─────────────────────────────────────────────
 export interface ProfitData {
   period: string;
   totalRevenue: number;
@@ -64,7 +111,9 @@ export interface ProfitData {
   profitMargin: number;
 }
 
+// ─────────────────────────────────────────────
 // 세금계산서 미발행 업체
+// ─────────────────────────────────────────────
 export interface UnissuedTaxResult {
   companyName: string;
   month: string;          // YYYY-MM
