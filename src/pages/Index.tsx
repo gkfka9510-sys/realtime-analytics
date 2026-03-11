@@ -1,13 +1,12 @@
-
 import React from 'react';
-import AppLayout from '@/components/AppLayout';
-import { AppProvider } from '@/contexts/AppContext';
+import { RiceProvider } from '@/contexts/RiceContext';
+import RiceDashboard from '@/components/RiceDashboard';
 
 const Index: React.FC = () => {
   return (
-    <AppProvider>
-      <AppLayout />
-    </AppProvider>
+    <RiceProvider>
+      <RiceDashboard />
+    </RiceProvider>
   );
 };
 
