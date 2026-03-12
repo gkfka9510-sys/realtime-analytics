@@ -1046,9 +1046,19 @@ app.get('/api/health', (req, res) => {
 
 // 정적 파일 제공 (빌드된 프론트엔드 - webapp/dist)
 const DIST_PATH = path.join(__dirname, '..', 'dist');
-app.use(express.static(DIST_PATH));
+// JS/CSS는 해시 파일명으로 버전관리, HTML만 캐시 금지
+app.use(express.static(DIST_PATH, {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+    }
+  }
+}));
 app.get('/{*path}', (req, res) => {
   if (!req.path.startsWith('/api')) {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(DIST_PATH, 'index.html'));
   }
 });
