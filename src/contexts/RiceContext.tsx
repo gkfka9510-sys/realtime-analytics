@@ -36,6 +36,7 @@ interface RiceContextType {
   // 거래처 (기초데이터)
   customers: Customer[];
   addCustomer: (c: Omit<Customer, 'id' | 'createdAt'>) => Promise<void>;
+  bulkAddCustomers: (customers: Customer[]) => Promise<{ inserted: number; total: number }>;
   updateCustomer: (id: string, c: Partial<Customer>) => Promise<void>;
   deleteCustomer: (id: string) => Promise<void>;
   // 품목 (기초데이터)
@@ -450,6 +451,17 @@ export const RiceProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCustomers(prev => [...prev, { id, ...c, createdAt: new Date().toISOString() }]);
   }, []);
 
+  const bulkAddCustomers = useCallback(async (newCustomers: Customer[]) => {
+    const result = await customerApi.bulkInsert(newCustomers);
+    // 새로 추가된 것만 상태에 반영
+    setCustomers(prev => {
+      const existingNames = new Set(prev.map(c => c.name));
+      const toAdd = newCustomers.filter(c => !existingNames.has(c.name));
+      return [...prev, ...toAdd];
+    });
+    return result as { inserted: number; total: number };
+  }, []);
+
   const updateCustomer = useCallback(async (id: string, update: Partial<Customer>) => {
     await customerApi.update(id, update);
     setCustomers(prev => prev.map(c => c.id === id ? { ...c, ...update } : c));
@@ -560,7 +572,7 @@ export const RiceProvider: React.FC<{ children: React.ReactNode }> = ({ children
       riceProducts, addRiceProduct, updateRiceProduct, deleteRiceProduct,
       inventory, inventoryTransactions, initInventory,
       addInventoryTransaction, updateInventory,
-      customers, addCustomer, updateCustomer, deleteCustomer,
+      customers, addCustomer, bulkAddCustomers, updateCustomer, deleteCustomer,
       items, addItem, updateItem, deleteItem,
       retailCustomers, addRetailCustomer, updateRetailCustomer, deleteRetailCustomer,
       retailSales, addRetailSale, updateRetailSale, deleteRetailSale,

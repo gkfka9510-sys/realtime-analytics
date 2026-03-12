@@ -137,6 +137,8 @@ export const customerApi = {
     apiFetch(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(customer) }),
   delete: (id: string) =>
     apiFetch(`/customers/${id}`, { method: 'DELETE' }),
+  bulkInsert: (customers: unknown[]) =>
+    apiFetch('/customers/bulk', { method: 'POST', body: JSON.stringify({ customers }) }),
 };
 
 // ── 품목 API (기초데이터 - 신규) ──

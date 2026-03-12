@@ -60,18 +60,22 @@ export interface OrderStats {
 // 기초데이터
 // ─────────────────────────────────────────────
 
+// 거래처 구분: I=매입처, O=매출처, M=혼합처
+export type CustomerType = 'I' | 'O' | 'M';
+
 // 거래처 (Customer)
 export interface Customer {
   id: string;
-  name: string;           // 거래처명 *
-  phone?: string;         // 연락처
-  bizNo?: string;         // 사업자등록번호
-  address?: string;       // 사업장 소재지
-  ceoName?: string;       // 대표자명
-  bizType?: string;       // 업태
-  bizItem?: string;       // 업종
-  email?: string;         // 이메일
-  memo?: string;          // 메모
+  name: string;               // 거래처명 *
+  phone?: string;             // 연락처
+  bizNo?: string;             // 사업자등록번호
+  address?: string;           // 사업장 소재지
+  ceoName?: string;           // 대표자명
+  bizType?: string;           // 업태
+  bizItem?: string;           // 업종
+  email?: string;             // 이메일
+  memo?: string;              // 메모
+  customerType?: CustomerType; // 거래처 구분: I=매입처, O=매출처, M=혼합처
   createdAt?: string;
 }
 

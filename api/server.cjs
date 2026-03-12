@@ -277,6 +277,8 @@ const migrations = [
   `ALTER TABLE sales_records ADD COLUMN transaction_type TEXT DEFAULT 'sale'`,
   `ALTER TABLE sales_records ADD COLUMN customer_id TEXT`,
   `ALTER TABLE sales_records ADD COLUMN item_id TEXT`,
+  // customers 테이블에 거래처구분 컬럼 추가
+  `ALTER TABLE customers ADD COLUMN customer_type TEXT DEFAULT 'O'`,
   // inventory 테이블 인덱스
   `CREATE INDEX IF NOT EXISTS idx_inventory_user ON inventory(user_id)`,
 ];
@@ -697,26 +699,54 @@ app.get('/api/customers', authMiddleware, (req, res) => {
 });
 
 app.post('/api/customers', authMiddleware, (req, res) => {
-  const { id, name, phone, bizNo, address, ceoName, bizType, bizItem, email, memo } = req.body;
+  const { id, name, phone, bizNo, address, ceoName, bizType, bizItem, email, memo, customerType } = req.body;
   if (!id || !name) return res.status(400).json({ error: '거래처명은 필수입니다.' });
   db.prepare(
-    'INSERT OR REPLACE INTO customers (id,user_id,name,phone,biz_no,address,ceo_name,biz_type,biz_item,email,memo,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,datetime(\'now\',\'localtime\'))'
-  ).run(id, req.user.id, name, phone || '', bizNo || '', address || '', ceoName || '', bizType || '', bizItem || '', email || '', memo || '');
+    'INSERT OR REPLACE INTO customers (id,user_id,name,phone,biz_no,address,ceo_name,biz_type,biz_item,email,memo,customer_type,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,datetime(\'now\',\'localtime\'))'
+  ).run(id, req.user.id, name, phone||'', bizNo||'', address||'', ceoName||'', bizType||'', bizItem||'', email||'', memo||'', customerType||'O');
   res.json({ id });
 });
 
 app.put('/api/customers/:id', authMiddleware, (req, res) => {
-  const { name, phone, bizNo, address, ceoName, bizType, bizItem, email, memo } = req.body;
+  const { name, phone, bizNo, address, ceoName, bizType, bizItem, email, memo, customerType } = req.body;
   if (!name) return res.status(400).json({ error: '거래처명은 필수입니다.' });
   db.prepare(
-    "UPDATE customers SET name=?,phone=?,biz_no=?,address=?,ceo_name=?,biz_type=?,biz_item=?,email=?,memo=?,updated_at=datetime('now','localtime') WHERE id=? AND user_id=?"
-  ).run(name, phone || '', bizNo || '', address || '', ceoName || '', bizType || '', bizItem || '', email || '', memo || '', req.params.id, req.user.id);
+    "UPDATE customers SET name=?,phone=?,biz_no=?,address=?,ceo_name=?,biz_type=?,biz_item=?,email=?,memo=?,customer_type=?,updated_at=datetime('now','localtime') WHERE id=? AND user_id=?"
+  ).run(name, phone||'', bizNo||'', address||'', ceoName||'', bizType||'', bizItem||'', email||'', memo||'', customerType||'O', req.params.id, req.user.id);
   res.json({ updated: true });
 });
 
 app.delete('/api/customers/:id', authMiddleware, (req, res) => {
   db.prepare('DELETE FROM customers WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
   res.json({ deleted: true });
+});
+
+// 거래처 일괄 등록 (CSV import)
+app.post('/api/customers/bulk', authMiddleware, (req, res) => {
+  const { customers } = req.body;
+  if (!Array.isArray(customers) || customers.length === 0)
+    return res.status(400).json({ error: '거래처 배열이 필요합니다.' });
+
+  const insert = db.prepare(
+    'INSERT OR IGNORE INTO customers (id,user_id,name,phone,biz_no,address,ceo_name,biz_type,biz_item,email,memo,customer_type,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,datetime(\'now\',\'localtime\'))'
+  );
+  const insertMany = db.transaction((rows) => {
+    let inserted = 0;
+    for (const c of rows) {
+      const r = insert.run(
+        c.id, req.user.id, c.name,
+        c.phone||'', c.bizNo||'', c.address||'',
+        c.ceoName||'', c.bizType||'', c.bizItem||'',
+        c.email||'', c.memo||'', c.customerType||'O'
+      );
+      inserted += r.changes;
+    }
+    return inserted;
+  });
+
+  const inserted = insertMany(customers);
+  const total = db.prepare('SELECT COUNT(*) as c FROM customers WHERE user_id=?').get(req.user.id).c;
+  res.json({ inserted, total });
 });
 
 // ──────────────────────────────────────────────────────
