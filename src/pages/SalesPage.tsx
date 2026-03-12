@@ -262,10 +262,14 @@ export default function SalesPage() {
     setUploadMsg('파일 파싱 중...');
     try {
       const text = await readFileAsText(file);
-      const records = parseSalesCSV(text);
-      if (records.length === 0) { setUploadMsg('⚠️ 파싱된 데이터가 없습니다.'); return; }
+      const { records, errors } = parseSalesCSV(text);
+      if (records.length === 0) {
+        setUploadMsg(`⚠️ 파싱된 데이터가 없습니다.${errors.length > 0 ? ' 오류: ' + errors[0] : ''}`);
+        return;
+      }
       await addSalesRecords(records);
-      setUploadMsg(`✅ ${records.length}건 업로드 완료`);
+      const errMsg = errors.length > 0 ? ` (오류 ${errors.length}건 건너뜀)` : '';
+      setUploadMsg(`✅ ${records.length}건 업로드 완료${errMsg}`);
     } catch (err) {
       setUploadMsg(`❌ 오류: ${err instanceof Error ? err.message : String(err)}`);
     }
@@ -279,10 +283,14 @@ export default function SalesPage() {
     setTaxUploadMsg('파일 파싱 중...');
     try {
       const text = await readFileAsText(file);
-      const invoices = parseTaxInvoiceCSV(text);
-      if (invoices.length === 0) { setTaxUploadMsg('⚠️ 파싱된 데이터가 없습니다.'); return; }
+      const { invoices, errors } = parseTaxInvoiceCSV(text);
+      if (invoices.length === 0) {
+        setTaxUploadMsg(`⚠️ 파싱된 데이터가 없습니다.${errors.length > 0 ? ' 오류: ' + errors[0] : ''}`);
+        return;
+      }
       await addTaxInvoices(invoices);
-      setTaxUploadMsg(`✅ ${invoices.length}건 업로드 완료`);
+      const errMsg = errors.length > 0 ? ` (오류 ${errors.length}건 건너뜀)` : '';
+      setTaxUploadMsg(`✅ ${invoices.length}건 업로드 완료${errMsg}`);
     } catch (err) {
       setTaxUploadMsg(`❌ 오류: ${err instanceof Error ? err.message : String(err)}`);
     }

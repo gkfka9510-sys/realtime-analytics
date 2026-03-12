@@ -6,7 +6,9 @@ import { SalesRecord, TaxInvoice } from '@/types/rice';
  * CSV 텍스트를 파싱하여 배열로 반환
  */
 export function parseCSV(text: string): string[][] {
-  const lines = text.trim().split('\n');
+  // BOM 제거
+  const cleaned = text.replace(/^\uFEFF/, '');
+  const lines = cleaned.trim().split('\n');
   return lines.map(line => {
     const result: string[] = [];
     let cur = '';
@@ -81,11 +83,12 @@ export function parseSalesCSV(text: string): { records: SalesRecord[]; errors: s
     return -1;
   };
 
-  const dateIdx = findCol(['날짜', 'date', '일자', '거래일']);
-  const companyIdx = findCol(['업체', '거래처', 'company', '상호', '고객']);
-  const productIdx = findCol(['품목', '품명', '상품', 'product', '제품']);
-  const qtyIdx = findCol(['수량', 'qty', 'quantity', '무게', 'kg']);
-  const unitPriceIdx = findCol(['단가', 'unit', '단위가격']);
+  const dateIdx = findCol(['거래일자', '날짜', 'date', '일자', '거래일']);
+  const companyIdx = findCol(['거래처명', '업체', '거래처', 'company', '상호', '고객']);
+  const productIdx = findCol(['품명', '품목', '상품', 'product', '제품']);
+  const qtyIdx = findCol(['수량', 'qty', 'quantity', '무게']);
+  const unitPriceIdx = findCol(['단가', '단위가격']);
+  const specIdx = findCol(['규격', 'spec', '사양']);
   const totalIdx = findCol(['합계', '금액', '총액', 'total', 'amount', '매출']);
   const memoIdx = findCol(['비고', 'memo', '메모', '특이']);
 
@@ -94,9 +97,11 @@ export function parseSalesCSV(text: string): { records: SalesRecord[]; errors: s
     if (row.every(cell => !cell)) continue; // 빈 행 무시
 
     try {
-      const date = dateIdx >= 0 ? normalizeDate(row[dateIdx]) : '';
+      const date = dateIdx >= 0 ? normalizeDate(row[dateIdx].replace(/\r/g, '')) : '';
       const companyName = companyIdx >= 0 ? row[companyIdx] : row[0] || '알 수 없음';
-      const productName = productIdx >= 0 ? row[productIdx] : '';
+      const baseProduct = productIdx >= 0 ? row[productIdx] : '';
+      const spec = specIdx >= 0 ? row[specIdx] : '';
+      const productName = spec ? `${baseProduct} (${spec})` : baseProduct;
       const quantity = qtyIdx >= 0 ? parseNumber(row[qtyIdx]) : 0;
       const unitPrice = unitPriceIdx >= 0 ? parseNumber(row[unitPriceIdx]) : 0;
       const totalAmount = totalIdx >= 0 ? parseNumber(row[totalIdx]) : unitPrice * quantity;
