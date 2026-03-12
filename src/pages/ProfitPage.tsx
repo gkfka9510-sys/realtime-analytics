@@ -184,12 +184,12 @@ export default function ProfitPage() {
       {/* 헤더 */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-          <DollarSign className="text-[#00d9ff]" size={28} />
+          <DollarSign className="text-[#22c55e]" size={28} />
           순이익 분석
         </h2>
         <button
           onClick={() => { setShowForm(true); setEditingId(null); setForm(DEFAULT_FORM); }}
-          className="flex items-center gap-2 px-4 py-2 bg-[#00d9ff] hover:bg-[#00b8d9] text-[#1a1d29] font-semibold rounded-lg transition-colors text-sm"
+          className="flex items-center gap-2 px-4 py-2 bg-[#22c55e] hover:bg-[#16a34a] text-[#0f1117] font-semibold rounded-lg transition-colors text-sm"
         >
           <Plus size={16} />
           품목/원가 등록
@@ -197,17 +197,17 @@ export default function ProfitPage() {
       </div>
 
       {/* 안내 배너 */}
-      <div className="flex items-start gap-3 p-4 bg-[#00d9ff]/5 border border-[#00d9ff]/20 rounded-xl">
-        <Info size={16} className="text-[#00d9ff] mt-0.5 flex-shrink-0" />
+      <div className="flex items-start gap-3 p-4 bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-xl">
+        <Info size={16} className="text-[#22c55e] mt-0.5 flex-shrink-0" />
         <p className="text-gray-300 text-sm">
-          <span className="text-[#00d9ff] font-medium">판매가는 매출 데이터에서 자동 계산</span>됩니다.
+          <span className="text-[#22c55e] font-medium">판매가는 매출 데이터에서 자동 계산</span>됩니다.
           품목별 원가(매입가)만 등록하면, 실제 매출 데이터의 합계금액 ÷ 판매 kg 으로 평균 판매가와 순이익이 자동 산출됩니다.
         </p>
       </div>
 
       {/* 품목 등록/수정 폼 */}
       {showForm && (
-        <div className="bg-[#2d3142] border border-[#00d9ff]/30 rounded-xl p-5">
+        <div className="bg-[#1c1f2e] border border-[#22c55e]/30 rounded-xl p-5">
           <h3 className="text-white font-semibold mb-4">{editingId ? '품목 수정' : '품목/원가 등록'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* 품명 */}
@@ -218,7 +218,7 @@ export default function ProfitPage() {
                 placeholder="예: 신동진쌀 20kg"
                 value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#00d9ff] focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#22c55e] focus:outline-none"
               />
               <p className="text-gray-500 text-xs mt-1">매출 CSV의 품목명과 유사하게 입력</p>
             </div>
@@ -232,7 +232,7 @@ export default function ProfitPage() {
                     key={s}
                     type="button"
                     onClick={() => setForm(f => ({ ...f, weightPerBag: s }))}
-                    className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${form.weightPerBag === s ? 'bg-[#00d9ff] text-[#1a1d29]' : 'bg-[#1a1d29] text-gray-400 hover:text-white border border-[#3d4362]'}`}
+                    className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${form.weightPerBag === s ? 'bg-[#22c55e] text-[#0f1117]' : 'bg-[#0f1117] text-gray-400 hover:text-white border border-[#2e3147]'}`}
                   >
                     {s}kg
                   </button>
@@ -243,7 +243,7 @@ export default function ProfitPage() {
                 placeholder="직접 입력 (kg)"
                 value={form.weightPerBag || ''}
                 onChange={e => setForm(f => ({ ...f, weightPerBag: Number(e.target.value) }))}
-                className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-[#00d9ff] focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-[#22c55e] focus:outline-none"
               />
             </div>
 
@@ -255,23 +255,23 @@ export default function ProfitPage() {
                 placeholder="예: 48000"
                 value={form.purchasePrice || ''}
                 onChange={e => setForm(f => ({ ...f, purchasePrice: Number(e.target.value) }))}
-                className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#00d9ff] focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#22c55e] focus:outline-none"
               />
               {form.purchasePrice > 0 && form.weightPerBag > 0 && (
-                <div className="mt-2 p-2 bg-[#1a1d29] rounded-lg">
-                  <p className="text-[#00d9ff] text-xs">1kg당 원가: <span className="font-bold">{formatKRW(Math.round(form.purchasePrice / form.weightPerBag))}</span></p>
+                <div className="mt-2 p-2 bg-[#0f1117] rounded-lg">
+                  <p className="text-[#22c55e] text-xs">1kg당 원가: <span className="font-bold">{formatKRW(Math.round(form.purchasePrice / form.weightPerBag))}</span></p>
                 </div>
               )}
             </div>
           </div>
           <div className="flex gap-2 mt-4">
             <button onClick={handleSubmit}
-              className="flex items-center gap-2 px-5 py-2 bg-[#00d9ff] text-[#1a1d29] font-semibold rounded-lg hover:bg-[#00b8d9] transition-colors text-sm">
+              className="flex items-center gap-2 px-5 py-2 bg-[#22c55e] text-[#0f1117] font-semibold rounded-lg hover:bg-[#16a34a] transition-colors text-sm">
               <Save size={16} />
               {editingId ? '수정 완료' : '등록'}
             </button>
             <button onClick={() => { setShowForm(false); setEditingId(null); }}
-              className="flex items-center gap-2 px-4 py-2 bg-[#3d4362] text-gray-300 rounded-lg hover:bg-[#4d5382] transition-colors text-sm">
+              className="flex items-center gap-2 px-4 py-2 bg-[#2e3147] text-gray-300 rounded-lg hover:bg-[#4d5382] transition-colors text-sm">
               <X size={16} />
               취소
             </button>
@@ -281,17 +281,17 @@ export default function ProfitPage() {
 
       {/* 등록된 품목 원가표 */}
       {riceProducts.length > 0 && (
-        <div className="bg-[#2d3142] rounded-xl border border-[#3d4362] overflow-hidden">
-          <div className="p-4 border-b border-[#3d4362]">
+        <div className="bg-[#1c1f2e] rounded-xl border border-[#2e3147] overflow-hidden">
+          <div className="p-4 border-b border-[#2e3147]">
             <h3 className="text-white font-semibold flex items-center gap-2">
-              <Package size={18} className="text-[#00d9ff]" />
+              <Package size={18} className="text-[#22c55e]" />
               등록 품목 원가표
             </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#3d4362]">
+                <tr className="border-b border-[#2e3147]">
                   {['품명', '포대 무게', '포대 매입가', '1kg당 원가', ''].map(h => (
                     <th key={h} className="text-left text-gray-400 px-4 py-3 font-medium whitespace-nowrap">{h}</th>
                   ))}
@@ -299,14 +299,14 @@ export default function ProfitPage() {
               </thead>
               <tbody>
                 {riceProducts.map(p => (
-                  <tr key={p.id} className="border-b border-[#3d4362]/50 hover:bg-[#3d4362]/20">
+                  <tr key={p.id} className="border-b border-[#2e3147]/50 hover:bg-[#2a2d3e]/20">
                     <td className="px-4 py-3 text-white font-medium">{p.name}</td>
                     <td className="px-4 py-3 text-gray-300">{p.weightPerBag}kg</td>
                     <td className="px-4 py-3 text-gray-300">{formatKRW(p.purchasePrice)}</td>
                     <td className="px-4 py-3 text-yellow-400 font-semibold">{formatKRW(Math.round(p.costPerKg))}</td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
-                        <button onClick={() => handleEdit(p)} className="text-gray-400 hover:text-[#00d9ff] transition-colors"><Edit2 size={14} /></button>
+                        <button onClick={() => handleEdit(p)} className="text-gray-400 hover:text-[#22c55e] transition-colors"><Edit2 size={14} /></button>
                         <button onClick={() => handleDelete(p.id)} className="text-gray-400 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
                       </div>
                     </td>
@@ -331,7 +331,7 @@ export default function ProfitPage() {
             <select
               value={selectedMonth}
               onChange={e => setSelectedMonth(e.target.value)}
-              className="bg-[#2d3142] border border-[#3d4362] text-white rounded-lg px-3 py-1.5 text-sm"
+              className="bg-[#1c1f2e] border border-[#2e3147] text-white rounded-lg px-3 py-1.5 text-sm"
             >
               {months.map(m => (
                 <option key={m} value={m}>{m.replace('-', '년 ')}월</option>
@@ -342,12 +342,12 @@ export default function ProfitPage() {
           {/* 요약 카드 */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: '총 매출', value: formatKRW(totals.revenue), color: '#00d9ff', icon: DollarSign },
+              { label: '총 매출', value: formatKRW(totals.revenue), color: '#22c55e', icon: DollarSign },
               { label: '총 원가', value: formatKRW(totals.cost), color: '#f59e0b', icon: Package },
               { label: '순이익', value: formatKRW(totals.profit), color: totals.profit >= 0 ? '#10b981' : '#ef4444', icon: TrendingUp },
               { label: '이익률', value: `${totals.margin.toFixed(1)}%`, color: totals.margin >= 10 ? '#10b981' : '#f59e0b', icon: Percent },
             ].map((card, i) => (
-              <div key={i} className="bg-[#2d3142] rounded-xl p-4 border border-[#3d4362]">
+              <div key={i} className="bg-[#1c1f2e] rounded-xl p-4 border border-[#2e3147]">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-gray-400 text-xs">{card.label}</span>
                   <card.icon size={16} style={{ color: card.color }} />
@@ -359,8 +359,8 @@ export default function ProfitPage() {
 
           {/* 품목별 이익 (판매가 = 매출 데이터 역산) */}
           {profitByProduct.filter(p => p.revenue > 0).length > 0 && (
-            <div className="bg-[#2d3142] rounded-xl border border-[#3d4362] overflow-hidden">
-              <div className="p-4 border-b border-[#3d4362] flex items-center justify-between">
+            <div className="bg-[#1c1f2e] rounded-xl border border-[#2e3147] overflow-hidden">
+              <div className="p-4 border-b border-[#2e3147] flex items-center justify-between">
                 <h3 className="text-white font-semibold">품목별 순이익 ({selectedMonth.replace('-', '년 ')}월)</h3>
                 <span className="text-xs text-gray-500 flex items-center gap-1">
                   <Info size={12} />
@@ -370,7 +370,7 @@ export default function ProfitPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[#3d4362]">
+                    <tr className="border-b border-[#2e3147]">
                       {['품목', '판매량(kg)', '매출', '원가', '순이익', '평균판매가/kg', '1kg 마진', '이익률'].map(h => (
                         <th key={h} className="text-left text-gray-400 px-4 py-3 font-medium whitespace-nowrap">{h}</th>
                       ))}
@@ -378,13 +378,13 @@ export default function ProfitPage() {
                   </thead>
                   <tbody>
                     {profitByProduct.filter(p => p.revenue > 0).map(p => (
-                      <tr key={p.id} className="border-b border-[#3d4362]/50 hover:bg-[#3d4362]/20">
+                      <tr key={p.id} className="border-b border-[#2e3147]/50 hover:bg-[#2a2d3e]/20">
                         <td className="px-4 py-3 text-white font-medium whitespace-nowrap">{p.name}</td>
                         <td className="px-4 py-3 text-gray-300">{formatNum(Math.round(p.totalKg))}kg</td>
-                        <td className="px-4 py-3 text-[#00d9ff]">{formatKRW(p.revenue)}</td>
+                        <td className="px-4 py-3 text-[#22c55e]">{formatKRW(p.revenue)}</td>
                         <td className="px-4 py-3 text-yellow-400">{formatKRW(Math.round(p.cost))}</td>
                         <td className={`px-4 py-3 font-semibold ${p.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatKRW(Math.round(p.profit))}</td>
-                        <td className="px-4 py-3 text-[#00d9ff]">
+                        <td className="px-4 py-3 text-[#22c55e]">
                           {p.avgSellingPricePerKg > 0 ? formatKRW(Math.round(p.avgSellingPricePerKg)) : '-'}
                         </td>
                         <td className={`px-4 py-3 font-medium ${p.marginPerKg >= 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -405,19 +405,19 @@ export default function ProfitPage() {
 
           {/* 월별 추이 차트 */}
           {monthlyProfitData.length > 1 && (
-            <div className="bg-[#2d3142] rounded-xl p-5 border border-[#3d4362]">
+            <div className="bg-[#1c1f2e] rounded-xl p-5 border border-[#2e3147]">
               <h3 className="text-white font-semibold mb-4">월별 매출 / 원가 / 순이익 추이</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={monthlyProfitData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#3d4362" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2e3147" />
                   <XAxis dataKey="month" tick={{ fill: '#9ca3af', fontSize: 11 }} />
                   <YAxis tick={{ fill: '#9ca3af', fontSize: 10 }} tickFormatter={v => `${(v / 1000000).toFixed(0)}M`} />
                   <Tooltip
-                    contentStyle={{ background: '#1a1d29', border: '1px solid #3d4362', borderRadius: 8 }}
+                    contentStyle={{ background: '#1c1f2e', border: '1px solid #4a4f6e', borderRadius: 8 }}
                     formatter={(v: number, name: string) => [formatKRW(v), name === 'revenue' ? '매출' : name === 'cost' ? '원가' : '순이익']}
                   />
                   <Legend formatter={v => v === 'revenue' ? '매출' : v === 'cost' ? '원가' : '순이익'} />
-                  <Bar dataKey="revenue" fill="#00d9ff" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="revenue" fill="#22c55e" radius={[3, 3, 0, 0]} />
                   <Bar dataKey="cost" fill="#f59e0b" radius={[3, 3, 0, 0]} />
                   <Bar dataKey="profit" fill="#10b981" radius={[3, 3, 0, 0]} />
                 </BarChart>

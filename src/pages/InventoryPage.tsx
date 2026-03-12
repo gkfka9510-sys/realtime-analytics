@@ -127,17 +127,17 @@ export default function InventoryPage() {
       {/* ── 헤더 ── */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Package className="text-[#00d9ff]" size={28} />
+          <Package className="text-[#22c55e]" size={28} />
           재고 현황
         </h2>
         <div className="flex items-center gap-3">
-          <div className="bg-[#2d3142] rounded-xl px-4 py-2 border border-[#3d4362]">
+          <div className="bg-[#1c1f2e] rounded-xl px-4 py-2 border border-[#2e3147]">
             <span className="text-gray-400 text-xs block">총 재고 가치</span>
-            <span className="text-[#00d9ff] font-bold text-lg">{formatKRW(totalStockValue)}</span>
+            <span className="text-[#22c55e] font-bold text-lg">{formatKRW(totalStockValue)}</span>
           </div>
           <button
             onClick={() => { setShowAddForm(v => !v); setAddMsg(''); }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#00d9ff] hover:bg-[#00b8d9] text-[#1a1d29] font-semibold rounded-xl transition-colors text-sm"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#22c55e] hover:bg-[#16a34a] text-[#0f1117] font-semibold rounded-xl transition-colors text-sm"
           >
             <Plus size={16} />
             품목 추가
@@ -147,7 +147,7 @@ export default function InventoryPage() {
 
       {/* ── 빠른 입고 버튼 패널 (품목이 있을 때) ── */}
       {inventory.length > 0 && (
-        <div className="bg-[#2d3142] border border-green-500/20 rounded-xl p-4">
+        <div className="bg-[#1c1f2e] border border-green-500/20 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-3">
             <ArrowUp size={16} className="text-green-400" />
             <h3 className="text-white font-semibold text-sm">빠른 입고</h3>
@@ -171,9 +171,9 @@ export default function InventoryPage() {
 
       {/* ── 새 품목 추가 폼 ── */}
       {showAddForm && (
-        <div className="bg-[#2d3142] border border-[#00d9ff]/30 rounded-xl p-5">
+        <div className="bg-[#1c1f2e] border border-[#22c55e]/30 rounded-xl p-5">
           <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-            <Plus size={16} className="text-[#00d9ff]" />
+            <Plus size={16} className="text-[#22c55e]" />
             새 품목 추가
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -185,7 +185,7 @@ export default function InventoryPage() {
                 placeholder="예: 신동진쌀 20kg"
                 value={newProduct.name}
                 onChange={e => setNewProduct(p => ({ ...p, name: e.target.value }))}
-                className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#00d9ff] focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#22c55e] focus:outline-none"
               />
             </div>
 
@@ -198,7 +198,7 @@ export default function InventoryPage() {
                     key={s}
                     type="button"
                     onClick={() => setNewProduct(p => ({ ...p, weightPerBag: s }))}
-                    className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${newProduct.weightPerBag === s ? 'bg-[#00d9ff] text-[#1a1d29]' : 'bg-[#1a1d29] text-gray-400 hover:text-white border border-[#3d4362]'}`}
+                    className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${newProduct.weightPerBag === s ? 'bg-[#22c55e] text-[#0f1117]' : 'bg-[#0f1117] text-gray-400 hover:text-white border border-[#2e3147]'}`}
                   >
                     {s}kg
                   </button>
@@ -209,7 +209,7 @@ export default function InventoryPage() {
                 placeholder="직접 입력 (kg)"
                 value={newProduct.weightPerBag || ''}
                 onChange={e => setNewProduct(p => ({ ...p, weightPerBag: Number(e.target.value) }))}
-                className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-[#00d9ff] focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-[#22c55e] focus:outline-none"
               />
             </div>
 
@@ -221,10 +221,10 @@ export default function InventoryPage() {
                 placeholder="예: 48000"
                 value={newProduct.purchasePrice || ''}
                 onChange={e => setNewProduct(p => ({ ...p, purchasePrice: Number(e.target.value) }))}
-                className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#00d9ff] focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#22c55e] focus:outline-none"
               />
               {newProduct.purchasePrice > 0 && newProduct.weightPerBag > 0 && (
-                <p className="text-[#00d9ff] text-xs mt-1.5">
+                <p className="text-[#22c55e] text-xs mt-1.5">
                   → 1kg 원가: <strong>{formatKRW(Math.round(newProduct.purchasePrice / newProduct.weightPerBag))}</strong>
                 </p>
               )}
@@ -238,14 +238,14 @@ export default function InventoryPage() {
           <div className="flex gap-2 mt-4">
             <button
               onClick={handleAddProduct}
-              className="flex items-center gap-2 px-5 py-2 bg-[#00d9ff] text-[#1a1d29] font-semibold rounded-lg hover:bg-[#00b8d9] transition-colors text-sm"
+              className="flex items-center gap-2 px-5 py-2 bg-[#22c55e] text-[#0f1117] font-semibold rounded-lg hover:bg-[#16a34a] transition-colors text-sm"
             >
               <Save size={15} />
               품목 등록
             </button>
             <button
               onClick={() => { setShowAddForm(false); setAddMsg(''); }}
-              className="flex items-center gap-2 px-4 py-2 bg-[#3d4362] text-gray-300 rounded-lg hover:bg-[#4d5382] transition-colors text-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-[#2e3147] text-gray-300 rounded-lg hover:bg-[#4d5382] transition-colors text-sm"
             >
               <X size={15} />
               취소
@@ -259,7 +259,7 @@ export default function InventoryPage() {
         <div className="text-center py-14 text-gray-500">
           <Package size={52} className="mx-auto mb-4 opacity-20" />
           <p className="mb-2">등록된 품목이 없습니다.</p>
-          <p className="text-sm">위의 <span className="text-[#00d9ff]">품목 추가</span> 버튼을 눌러 쌀 품목을 등록해보세요.</p>
+          <p className="text-sm">위의 <span className="text-[#22c55e]">품목 추가</span> 버튼을 눌러 쌀 품목을 등록해보세요.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -269,8 +269,8 @@ export default function InventoryPage() {
             return (
               <div
                 key={item.id}
-                className={`bg-[#2d3142] rounded-xl p-5 border relative transition-all
-                  ${isEmpty ? 'border-gray-600/50 opacity-80' : isLow ? 'border-red-500/60' : 'border-[#3d4362]'}`}
+                className={`bg-[#1c1f2e] rounded-xl p-5 border relative transition-all
+                  ${isEmpty ? 'border-gray-600/50 opacity-80' : isLow ? 'border-red-500/60' : 'border-[#2e3147]'}`}
               >
                 {/* 상단 배지 */}
                 {isLow && !isEmpty && (
@@ -280,7 +280,7 @@ export default function InventoryPage() {
                   </div>
                 )}
                 {isEmpty && (
-                  <div className="absolute top-3 right-3 text-xs text-gray-500 bg-[#1a1d29] px-2 py-0.5 rounded-full">
+                  <div className="absolute top-3 right-3 text-xs text-gray-500 bg-[#0f1117] px-2 py-0.5 rounded-full">
                     재고 없음
                   </div>
                 )}
@@ -289,25 +289,25 @@ export default function InventoryPage() {
 
                 {/* 수치 그리드 */}
                 <div className="grid grid-cols-2 gap-2 mb-4">
-                  <div className="bg-[#1a1d29] rounded-lg p-3">
+                  <div className="bg-[#0f1117] rounded-lg p-3">
                     <div className="text-gray-400 text-xs mb-0.5">현재 재고</div>
-                    <div className="text-[#00d9ff] font-bold text-xl leading-tight">
+                    <div className="text-[#22c55e] font-bold text-xl leading-tight">
                       {formatNum(Math.round(item.currentStock * 10) / 10)}
                       <span className="text-sm ml-1 font-normal">포대</span>
                     </div>
                   </div>
-                  <div className="bg-[#1a1d29] rounded-lg p-3">
+                  <div className="bg-[#0f1117] rounded-lg p-3">
                     <div className="text-gray-400 text-xs mb-0.5">kg 환산</div>
                     <div className="text-white font-bold text-xl leading-tight">
                       {formatNum(Math.round(item.currentStockKg))}
                       <span className="text-sm ml-1 font-normal">kg</span>
                     </div>
                   </div>
-                  <div className="bg-[#1a1d29] rounded-lg p-3">
+                  <div className="bg-[#0f1117] rounded-lg p-3">
                     <div className="text-gray-400 text-xs mb-0.5">포대 규격</div>
                     <div className="text-gray-200 font-semibold">{item.weightPerBag}kg/포대</div>
                   </div>
-                  <div className="bg-[#1a1d29] rounded-lg p-3">
+                  <div className="bg-[#0f1117] rounded-lg p-3">
                     <div className="text-gray-400 text-xs mb-0.5">재고 가치</div>
                     <div className="text-yellow-400 font-semibold text-sm">{formatKRW(item.stockValue)}</div>
                   </div>
@@ -319,7 +319,7 @@ export default function InventoryPage() {
                     <span>재고 수준</span>
                     <span>{item.currentStock.toFixed(1)}포대 / 50포대 기준</span>
                   </div>
-                  <div className="w-full bg-[#1a1d29] rounded-full h-2">
+                  <div className="w-full bg-[#0f1117] rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all duration-500 ${
                         item.currentStock >= 20 ? 'bg-green-500' :
@@ -366,16 +366,16 @@ export default function InventoryPage() {
 
       {/* ── 거래 이력 ── */}
       {inventoryTransactions.length > 0 && (
-        <div className="bg-[#2d3142] rounded-xl border border-[#3d4362] overflow-hidden">
-          <div className="p-4 border-b border-[#3d4362] flex flex-wrap items-center justify-between gap-3">
+        <div className="bg-[#1c1f2e] rounded-xl border border-[#2e3147] overflow-hidden">
+          <div className="p-4 border-b border-[#2e3147] flex flex-wrap items-center justify-between gap-3">
             <h3 className="text-white font-semibold flex items-center gap-2">
-              <TrendingUp size={16} className="text-[#00d9ff]" />
+              <TrendingUp size={16} className="text-[#22c55e]" />
               재고 변동 이력
             </h3>
             <select
               value={filterProduct}
               onChange={e => setFilterProduct(e.target.value)}
-              className="bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-1.5 text-sm"
+              className="bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-1.5 text-sm"
             >
               <option value="all">전체 품목</option>
               {inventory.map(i => (
@@ -386,7 +386,7 @@ export default function InventoryPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#3d4362]">
+                <tr className="border-b border-[#2e3147]">
                   {['일시', '품목', '유형', '포대', 'kg', '메모'].map(h => (
                     <th key={h} className="text-left text-gray-400 px-4 py-3 font-medium">{h}</th>
                   ))}
@@ -396,7 +396,7 @@ export default function InventoryPage() {
                 {recentTransactions.map(tx => {
                   const info = typeInfo(tx.type);
                   return (
-                    <tr key={tx.id} className="border-b border-[#3d4362]/40 hover:bg-[#3d4362]/20">
+                    <tr key={tx.id} className="border-b border-[#2e3147]/40 hover:bg-[#2a2d3e]/20">
                       <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
                         {new Date(tx.date).toLocaleString('ko-KR', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' })}
                       </td>
@@ -422,7 +422,7 @@ export default function InventoryPage() {
       {/* ── 입/출고/설정 모달 ── */}
       {modalState?.open && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#2d3142] rounded-2xl p-6 w-full max-w-sm border border-[#3d4362] shadow-2xl">
+          <div className="bg-[#1c1f2e] rounded-2xl p-6 w-full max-w-sm border border-[#2e3147] shadow-2xl">
             {/* 모달 헤더 */}
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-white font-bold text-lg">{modalTitle()}</h3>
@@ -436,16 +436,16 @@ export default function InventoryPage() {
             </p>
 
             {/* 입력 모드 토글 */}
-            <div className="flex bg-[#1a1d29] rounded-xl p-1 mb-4">
+            <div className="flex bg-[#0f1117] rounded-xl p-1 mb-4">
               <button
                 onClick={() => setInputMode('bag')}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${inputMode === 'bag' ? 'bg-[#00d9ff] text-[#1a1d29]' : 'text-gray-400 hover:text-white'}`}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${inputMode === 'bag' ? 'bg-[#22c55e] text-[#0f1117]' : 'text-gray-400 hover:text-white'}`}
               >
                 포대 수 입력
               </button>
               <button
                 onClick={() => setInputMode('kg')}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${inputMode === 'kg' ? 'bg-[#00d9ff] text-[#1a1d29]' : 'text-gray-400 hover:text-white'}`}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${inputMode === 'kg' ? 'bg-[#22c55e] text-[#0f1117]' : 'text-gray-400 hover:text-white'}`}
               >
                 kg 입력
               </button>
@@ -460,11 +460,11 @@ export default function InventoryPage() {
                   placeholder="포대 수 입력"
                   value={bagCount}
                   onChange={e => setBagCount(e.target.value)}
-                  className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-xl px-4 py-3 text-2xl font-bold text-center focus:border-[#00d9ff] focus:outline-none"
+                  className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-xl px-4 py-3 text-2xl font-bold text-center focus:border-[#22c55e] focus:outline-none"
                   autoFocus
                 />
                 {bagCount && Number(bagCount) > 0 && (
-                  <p className="text-[#00d9ff] text-sm mt-2 text-center">
+                  <p className="text-[#22c55e] text-sm mt-2 text-center">
                     = <strong>{formatNum(Math.round(Number(bagCount) * modalState.weightPerBag))}kg</strong>
                   </p>
                 )}
@@ -477,11 +477,11 @@ export default function InventoryPage() {
                   placeholder="kg 수량 입력"
                   value={kgCount}
                   onChange={e => setKgCount(e.target.value)}
-                  className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-xl px-4 py-3 text-2xl font-bold text-center focus:border-[#00d9ff] focus:outline-none"
+                  className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-xl px-4 py-3 text-2xl font-bold text-center focus:border-[#22c55e] focus:outline-none"
                   autoFocus
                 />
                 {kgCount && Number(kgCount) > 0 && (
-                  <p className="text-[#00d9ff] text-sm mt-2 text-center">
+                  <p className="text-[#22c55e] text-sm mt-2 text-center">
                     = <strong>{((Number(kgCount)) / modalState.weightPerBag).toFixed(2)}포대</strong>
                   </p>
                 )}
@@ -494,7 +494,7 @@ export default function InventoryPage() {
                 <button
                   key={n}
                   onClick={() => inputMode === 'bag' ? setBagCount(String(n)) : setKgCount(String(n))}
-                  className="px-3 py-1.5 bg-[#1a1d29] hover:bg-[#3d4362] text-gray-300 hover:text-white rounded-lg text-xs transition-colors border border-[#3d4362]"
+                  className="px-3 py-1.5 bg-[#0f1117] hover:bg-[#2a2d3e] text-gray-300 hover:text-white rounded-lg text-xs transition-colors border border-[#2e3147]"
                 >
                   {n}{inputMode === 'bag' ? '포대' : 'kg'}
                 </button>
@@ -510,7 +510,7 @@ export default function InventoryPage() {
                   placeholder="예: ○○농장 입고, 반품 등"
                   value={memo}
                   onChange={e => setMemo(e.target.value)}
-                  className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-[#00d9ff] focus:outline-none"
+                  className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-[#22c55e] focus:outline-none"
                 />
               </div>
             )}
@@ -533,7 +533,7 @@ export default function InventoryPage() {
               </button>
               <button
                 onClick={() => setModalState(null)}
-                className="flex-1 py-3 bg-[#3d4362] hover:bg-[#4d5382] text-gray-300 rounded-xl text-sm transition-colors"
+                className="flex-1 py-3 bg-[#2e3147] hover:bg-[#4d5382] text-gray-300 rounded-xl text-sm transition-colors"
               >
                 취소
               </button>

@@ -78,7 +78,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, title }) => {
         <h3 className="text-lg font-semibold text-white">{title}</h3>
         <button
           onClick={exportCSV}
-          className="flex items-center gap-2 px-4 py-2 bg-[#00d9ff] text-white rounded-lg hover:bg-[#00b8d9] transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[#00d9ff] text-white rounded-lg hover:bg-[#16a34a] transition-colors"
         >
           <Download size={16} />
           Export CSV

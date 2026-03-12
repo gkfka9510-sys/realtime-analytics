@@ -93,9 +93,9 @@ export default function SettingsPage({ onLogout, username, displayName }: Props)
 
   const ProgressBar = ({ pct, count, max }: { pct: number; count: number; max: number }) => (
     <div>
-      <div className="w-full bg-[#1a1d29] rounded-full h-2.5 mb-1">
+      <div className="w-full bg-[#0f1117] rounded-full h-2.5 mb-1">
         <div
-          className={`h-2.5 rounded-full transition-all ${pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-yellow-500' : 'bg-[#00d9ff]'}`}
+          className={`h-2.5 rounded-full transition-all ${pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-yellow-500' : 'bg-[#22c55e]'}`}
           style={{ width: `${Math.min(pct, 100)}%` }}
         />
       </div>
@@ -115,15 +115,15 @@ export default function SettingsPage({ onLogout, username, displayName }: Props)
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-        <Shield className="text-[#00d9ff]" size={28} />
+        <Shield className="text-[#22c55e]" size={28} />
         설정 및 스토리지 관리
       </h2>
 
       {/* 섹션 탭 */}
-      <div className="flex bg-[#2d3142] rounded-xl p-1 w-fit">
+      <div className="flex bg-[#1c1f2e] rounded-xl p-1 w-fit">
         <button
           onClick={() => setActiveSection('storage')}
-          className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeSection === 'storage' ? 'bg-[#00d9ff] text-[#1a1d29]' : 'text-gray-400 hover:text-white'}`}
+          className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeSection === 'storage' ? 'bg-[#22c55e] text-[#0f1117]' : 'text-gray-400 hover:text-white'}`}
         >
           <HardDrive size={15} />
           스토리지 관리
@@ -166,10 +166,10 @@ export default function SettingsPage({ onLogout, username, displayName }: Props)
               )}
 
               {/* 전체 DB 크기 */}
-              <div className="bg-[#2d3142] rounded-xl p-5 border border-[#3d4362]">
+              <div className="bg-[#1c1f2e] rounded-xl p-5 border border-[#2e3147]">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-white font-semibold flex items-center gap-2">
-                    <HardDrive size={18} className="text-[#00d9ff]" />
+                    <HardDrive size={18} className="text-[#22c55e]" />
                     스토리지 현황
                   </h3>
                   <button onClick={loadStats} className="text-gray-400 hover:text-white transition-colors">
@@ -178,19 +178,19 @@ export default function SettingsPage({ onLogout, username, displayName }: Props)
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-[#1a1d29] rounded-xl p-3 text-center">
-                    <div className="text-2xl font-bold text-[#00d9ff]">{stats.dbSizeMB}</div>
+                  <div className="bg-[#0f1117] rounded-xl p-3 text-center">
+                    <div className="text-2xl font-bold text-[#22c55e]">{stats.dbSizeMB}</div>
                     <div className="text-gray-400 text-xs mt-1">MB 사용</div>
                   </div>
-                  <div className="bg-[#1a1d29] rounded-xl p-3 text-center">
+                  <div className="bg-[#0f1117] rounded-xl p-3 text-center">
                     <div className="text-2xl font-bold text-white">{stats.sales.count.toLocaleString()}</div>
                     <div className="text-gray-400 text-xs mt-1">매출 건수</div>
                   </div>
-                  <div className="bg-[#1a1d29] rounded-xl p-3 text-center">
+                  <div className="bg-[#0f1117] rounded-xl p-3 text-center">
                     <div className="text-2xl font-bold text-white">{stats.taxInvoices.count.toLocaleString()}</div>
                     <div className="text-gray-400 text-xs mt-1">세금계산서</div>
                   </div>
-                  <div className="bg-[#1a1d29] rounded-xl p-3 text-center">
+                  <div className="bg-[#0f1117] rounded-xl p-3 text-center">
                     <div className="text-2xl font-bold text-white">{stats.inventoryTransactions.count.toLocaleString()}</div>
                     <div className="text-gray-400 text-xs mt-1">재고 이력</div>
                   </div>
@@ -225,7 +225,7 @@ export default function SettingsPage({ onLogout, username, displayName }: Props)
               </div>
 
               {/* 데이터 정리 */}
-              <div className="bg-[#2d3142] rounded-xl p-5 border border-[#3d4362]">
+              <div className="bg-[#1c1f2e] rounded-xl p-5 border border-[#2e3147]">
                 <h3 className="text-white font-semibold mb-1 flex items-center gap-2">
                   <Trash2 size={18} className="text-yellow-400" />
                   오래된 데이터 정리
@@ -236,7 +236,7 @@ export default function SettingsPage({ onLogout, username, displayName }: Props)
                     { type: 'sales' as const, label: '매출 데이터 정리', icon: '📊', desc: '오래된 매출 내역 삭제', minMonths: 6 },
                     { type: 'invTx' as const, label: '재고 이력 정리', icon: '📦', desc: '오래된 입출고 이력 삭제', minMonths: 3 },
                   ].map(item => (
-                    <div key={item.type} className="bg-[#1a1d29] rounded-xl p-4">
+                    <div key={item.type} className="bg-[#0f1117] rounded-xl p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-xl">{item.icon}</span>
                         <span className="text-white text-sm font-medium">{item.label}</span>
@@ -260,14 +260,14 @@ export default function SettingsPage({ onLogout, username, displayName }: Props)
 
               {/* 삭제 이력 */}
               {logs.length > 0 && (
-                <div className="bg-[#2d3142] rounded-xl border border-[#3d4362] overflow-hidden">
-                  <div className="p-4 border-b border-[#3d4362] flex items-center gap-2">
+                <div className="bg-[#1c1f2e] rounded-xl border border-[#2e3147] overflow-hidden">
+                  <div className="p-4 border-b border-[#2e3147] flex items-center gap-2">
                     <Clock size={16} className="text-gray-400" />
                     <h3 className="text-white font-semibold text-sm">데이터 정리 이력</h3>
                   </div>
-                  <div className="divide-y divide-[#3d4362]">
+                  <div className="divide-y divide-[#2e3147]">
                     {logs.map(log => (
-                      <div key={log.id} className="flex items-center justify-between px-4 py-3 hover:bg-[#3d4362]/20">
+                      <div key={log.id} className="flex items-center justify-between px-4 py-3 hover:bg-[#2a2d3e]/20">
                         <div className="flex items-center gap-3">
                           <FileText size={14} className="text-gray-400" />
                           <div>
@@ -292,13 +292,13 @@ export default function SettingsPage({ onLogout, username, displayName }: Props)
       {activeSection === 'account' && (
         <div className="space-y-4">
           {/* 계정 정보 */}
-          <div className="bg-[#2d3142] rounded-xl p-5 border border-[#3d4362]">
+          <div className="bg-[#1c1f2e] rounded-xl p-5 border border-[#2e3147]">
             <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-              <Shield size={18} className="text-[#00d9ff]" />
+              <Shield size={18} className="text-[#22c55e]" />
               계정 정보
             </h3>
-            <div className="flex items-center gap-4 p-4 bg-[#1a1d29] rounded-xl">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#00d9ff] to-[#7c3aed] flex items-center justify-center text-2xl">
+            <div className="flex items-center gap-4 p-4 bg-[#0f1117] rounded-xl">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#22c55e] to-[#7c3aed] flex items-center justify-center text-2xl">
                 🌾
               </div>
               <div>
@@ -309,7 +309,7 @@ export default function SettingsPage({ onLogout, username, displayName }: Props)
           </div>
 
           {/* 비밀번호 변경 */}
-          <div className="bg-[#2d3142] rounded-xl p-5 border border-[#3d4362]">
+          <div className="bg-[#1c1f2e] rounded-xl p-5 border border-[#2e3147]">
             <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
               <Key size={18} className="text-yellow-400" />
               비밀번호 변경
@@ -327,7 +327,7 @@ export default function SettingsPage({ onLogout, username, displayName }: Props)
                     placeholder={f.placeholder}
                     value={pwForm[f.key as keyof typeof pwForm]}
                     onChange={e => setPwForm(p => ({ ...p, [f.key]: e.target.value }))}
-                    className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-xl px-4 py-2.5 text-sm focus:border-[#00d9ff] focus:outline-none"
+                    className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-xl px-4 py-2.5 text-sm focus:border-[#22c55e] focus:outline-none"
                   />
                 </div>
               ))}
@@ -361,7 +361,7 @@ export default function SettingsPage({ onLogout, username, displayName }: Props)
       {/* 삭제 확인 모달 */}
       {deleteModal?.open && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#2d3142] rounded-2xl p-6 w-full max-w-sm border border-red-500/40">
+          <div className="bg-[#1c1f2e] rounded-2xl p-6 w-full max-w-sm border border-red-500/40">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-full bg-red-500/15 flex items-center justify-center">
                 <AlertTriangle size={20} className="text-red-400" />
@@ -383,7 +383,7 @@ export default function SettingsPage({ onLogout, username, displayName }: Props)
               </button>
               <button
                 onClick={() => setDeleteModal(null)}
-                className="flex-1 py-2.5 bg-[#3d4362] hover:bg-[#4d5382] text-gray-300 rounded-xl text-sm transition-colors"
+                className="flex-1 py-2.5 bg-[#2e3147] hover:bg-[#4d5382] text-gray-300 rounded-xl text-sm transition-colors"
               >
                 취소
               </button>

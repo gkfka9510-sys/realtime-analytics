@@ -124,14 +124,14 @@ export default function ShopProductPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Package size={20} className="text-[#00d9ff]" />
+            <Package size={20} className="text-[#22c55e]" />
             상품 관리
           </h2>
           <p className="text-gray-400 text-sm mt-0.5">고객 주문 페이지에 표시할 상품을 관리합니다.</p>
         </div>
         <button
           onClick={() => openForm()}
-          className="flex items-center gap-2 bg-[#00d9ff] text-[#1a1d29] font-bold px-4 py-2.5 rounded-xl hover:bg-[#00d9ff]/90 transition-colors text-sm flex-shrink-0"
+          className="flex items-center gap-2 bg-[#22c55e] text-[#0f1117] font-bold px-4 py-2.5 rounded-xl hover:bg-[#22c55e]/90 transition-colors text-sm flex-shrink-0"
         >
           <Plus size={16} />
           상품 추가
@@ -139,7 +139,7 @@ export default function ShopProductPage() {
       </div>
 
       {/* 주문 URL 공유 */}
-      <div className="bg-gradient-to-r from-[#7c3aed]/20 to-[#00d9ff]/20 border border-[#7c3aed]/40 rounded-xl p-4">
+      <div className="bg-gradient-to-r from-[#7c3aed]/20 to-[#22c55e]/20 border border-[#7c3aed]/40 rounded-xl p-4">
         <div className="flex items-start gap-3">
           <div className="w-8 h-8 bg-[#7c3aed]/30 rounded-lg flex items-center justify-center flex-shrink-0">
             <Link size={15} className="text-[#a78bfa]" />
@@ -148,12 +148,12 @@ export default function ShopProductPage() {
             <p className="text-white font-semibold text-sm mb-1">고객 주문 페이지 URL</p>
             <p className="text-gray-400 text-xs mb-3">이 URL을 고객에게 공유하면 바로 주문할 수 있습니다.</p>
             <div className="flex items-center gap-2">
-              <div className="flex-1 bg-[#1a1d29] border border-[#3d4362] rounded-lg px-3 py-2 text-[#00d9ff] text-xs font-mono truncate">
+              <div className="flex-1 bg-[#0f1117] border border-[#2e3147] rounded-lg px-3 py-2 text-[#22c55e] text-xs font-mono truncate">
                 {orderUrl}
               </div>
               <button
                 onClick={copyUrl}
-                className="flex items-center gap-1.5 bg-[#3d4362] hover:bg-[#4d5382] text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-shrink-0"
+                className="flex items-center gap-1.5 bg-[#2e3147] hover:bg-[#4d5382] text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-shrink-0"
               >
                 {copied ? <CheckCircle size={12} className="text-green-400" /> : <Copy size={12} />}
                 {copied ? '복사됨!' : '복사'}
@@ -162,7 +162,7 @@ export default function ShopProductPage() {
                 href="/order"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 bg-[#00d9ff]/20 hover:bg-[#00d9ff]/30 text-[#00d9ff] px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-shrink-0"
+                className="flex items-center gap-1.5 bg-[#22c55e]/20 hover:bg-[#22c55e]/30 text-[#22c55e] px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-shrink-0"
               >
                 <ExternalLink size={12} />
                 미리보기
@@ -174,13 +174,13 @@ export default function ShopProductPage() {
 
       {/* 상품 목록 */}
       {sortedProducts.length === 0 ? (
-        <div className="bg-[#2d3142] border border-[#3d4362] rounded-xl p-12 text-center">
+        <div className="bg-[#1c1f2e] border border-[#2e3147] rounded-xl p-12 text-center">
           <Package size={48} className="text-gray-600 mx-auto mb-3" />
           <p className="text-gray-400 font-medium mb-1">등록된 상품이 없습니다.</p>
           <p className="text-gray-500 text-sm mb-4">상품을 추가하면 고객 주문 페이지에 표시됩니다.</p>
           <button
             onClick={() => openForm()}
-            className="inline-flex items-center gap-2 bg-[#00d9ff] text-[#1a1d29] font-bold px-4 py-2.5 rounded-xl text-sm hover:bg-[#00d9ff]/90 transition-colors"
+            className="inline-flex items-center gap-2 bg-[#22c55e] text-[#0f1117] font-bold px-4 py-2.5 rounded-xl text-sm hover:bg-[#22c55e]/90 transition-colors"
           >
             <Plus size={15} />
             첫 번째 상품 추가
@@ -191,16 +191,16 @@ export default function ShopProductPage() {
           {sortedProducts.map((product, idx) => (
             <div
               key={product.id}
-              className={`bg-[#2d3142] border rounded-xl overflow-hidden transition-all ${product.isAvailable ? 'border-[#3d4362]' : 'border-[#3d4362]/40 opacity-60'}`}
+              className={`bg-[#1c1f2e] border rounded-xl overflow-hidden transition-all ${product.isAvailable ? 'border-[#2e3147]' : 'border-[#2e3147]/40 opacity-60'}`}
             >
               <div className="flex items-start gap-3 p-4">
                 {/* 이미지 */}
                 {product.imageUrl ? (
-                  <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-[#1a1d29]">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-[#0f1117]">
                     <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
                   </div>
                 ) : (
-                  <div className="w-16 h-16 rounded-xl flex-shrink-0 bg-[#1a1d29] flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-xl flex-shrink-0 bg-[#0f1117] flex items-center justify-center">
                     <Package size={24} className="text-gray-600" />
                   </div>
                 )}
@@ -217,12 +217,12 @@ export default function ShopProductPage() {
                     <p className="text-gray-400 text-xs mt-0.5 leading-relaxed line-clamp-2">{product.description}</p>
                   )}
                   <div className="flex items-center gap-3 mt-1.5">
-                    <span className="text-[#00d9ff] font-bold text-base">{formatKRW(product.price)}</span>
+                    <span className="text-[#22c55e] font-bold text-base">{formatKRW(product.price)}</span>
                     <span className="text-gray-500 text-xs">/ {product.unit}</span>
                     {product.unitOptions && product.unitOptions.length > 0 && (
                       <div className="flex gap-1 flex-wrap">
                         {product.unitOptions.map(opt => (
-                          <span key={opt} className="text-xs text-gray-500 bg-[#1a1d29] px-1.5 py-0.5 rounded">{opt}</span>
+                          <span key={opt} className="text-xs text-gray-500 bg-[#0f1117] px-1.5 py-0.5 rounded">{opt}</span>
                         ))}
                       </div>
                     )}
@@ -256,7 +256,7 @@ export default function ShopProductPage() {
                   </button>
                   <button
                     onClick={() => openForm(product)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#3d4362] transition-colors"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2a2d3e] transition-colors"
                   >
                     <Edit2 size={15} />
                   </button>
@@ -277,7 +277,7 @@ export default function ShopProductPage() {
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => setDeleteConfirm(null)} />
-          <div className="relative bg-[#2d3142] border border-[#3d4362] rounded-2xl p-6 max-w-sm w-full space-y-4">
+          <div className="relative bg-[#1c1f2e] border border-[#2e3147] rounded-2xl p-6 max-w-sm w-full space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center">
                 <Trash2 size={18} className="text-red-400" />
@@ -288,7 +288,7 @@ export default function ShopProductPage() {
               </div>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 bg-[#3d4362] text-gray-300 rounded-xl font-medium text-sm hover:bg-[#4d5382] transition-colors">
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 bg-[#2e3147] text-gray-300 rounded-xl font-medium text-sm hover:bg-[#4d5382] transition-colors">
                 취소
               </button>
               <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 py-2.5 bg-red-500 text-white rounded-xl font-bold text-sm hover:bg-red-600 transition-colors">
@@ -303,8 +303,8 @@ export default function ShopProductPage() {
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="absolute inset-0 bg-black/60" onClick={closeForm} />
-          <div className="relative w-full sm:max-w-lg bg-[#2d3142] border border-[#3d4362] rounded-t-3xl sm:rounded-3xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[#3d4362]">
+          <div className="relative w-full sm:max-w-lg bg-[#1c1f2e] border border-[#2e3147] rounded-t-3xl sm:rounded-3xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#2e3147]">
               <h3 className="text-white font-bold text-base">
                 {editingId ? '상품 수정' : '새 상품 추가'}
               </h3>
@@ -324,7 +324,7 @@ export default function ShopProductPage() {
                   value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                   placeholder="예: 신동진 쌀 20kg"
-                  className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00d9ff] transition-colors placeholder-gray-600"
+                  className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#22c55e] transition-colors placeholder-gray-600"
                 />
               </div>
 
@@ -336,7 +336,7 @@ export default function ShopProductPage() {
                   onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                   placeholder="상품에 대한 간단한 설명 (맛, 원산지, 특징 등)"
                   rows={2}
-                  className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00d9ff] transition-colors placeholder-gray-600 resize-none"
+                  className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#22c55e] transition-colors placeholder-gray-600 resize-none"
                 />
               </div>
 
@@ -352,10 +352,10 @@ export default function ShopProductPage() {
                     onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))}
                     placeholder="0"
                     min="0"
-                    className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00d9ff] transition-colors"
+                    className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#22c55e] transition-colors"
                   />
                   {form.price > 0 && (
-                    <p className="text-[#00d9ff] text-xs mt-1">{formatKRW(form.price)}</p>
+                    <p className="text-[#22c55e] text-xs mt-1">{formatKRW(form.price)}</p>
                   )}
                 </div>
                 <div>
@@ -363,7 +363,7 @@ export default function ShopProductPage() {
                   <select
                     value={form.unit}
                     onChange={e => setForm(f => ({ ...f, unit: e.target.value }))}
-                    className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00d9ff] transition-colors"
+                    className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#22c55e] transition-colors"
                   >
                     {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
                   </select>
@@ -383,14 +383,14 @@ export default function ShopProductPage() {
                     onChange={e => setUnitOptionInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && addUnitOption()}
                     placeholder="단위 입력 후 Enter"
-                    className="flex-1 bg-[#1a1d29] border border-[#3d4362] text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#00d9ff] transition-colors"
+                    className="flex-1 bg-[#0f1117] border border-[#2e3147] text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#22c55e] transition-colors"
                   />
-                  <button onClick={addUnitOption} className="bg-[#3d4362] hover:bg-[#4d5382] text-white px-3 py-2 rounded-xl text-sm transition-colors">추가</button>
+                  <button onClick={addUnitOption} className="bg-[#2e3147] hover:bg-[#4d5382] text-white px-3 py-2 rounded-xl text-sm transition-colors">추가</button>
                 </div>
                 {form.unitOptions && form.unitOptions.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {form.unitOptions.map(opt => (
-                      <span key={opt} className="flex items-center gap-1 text-sm bg-[#1a1d29] border border-[#3d4362] text-gray-300 px-2.5 py-1 rounded-lg">
+                      <span key={opt} className="flex items-center gap-1 text-sm bg-[#0f1117] border border-[#2e3147] text-gray-300 px-2.5 py-1 rounded-lg">
                         {opt}
                         <button onClick={() => removeUnitOption(opt)} className="text-gray-500 hover:text-red-400 transition-colors ml-0.5">
                           <X size={12} />
@@ -412,35 +412,35 @@ export default function ShopProductPage() {
                   value={form.imageUrl}
                   onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))}
                   placeholder="https://example.com/image.jpg"
-                  className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00d9ff] transition-colors placeholder-gray-600"
+                  className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#22c55e] transition-colors placeholder-gray-600"
                 />
                 {form.imageUrl && (
-                  <div className="mt-2 w-20 h-20 rounded-xl overflow-hidden bg-[#1a1d29] border border-[#3d4362]">
+                  <div className="mt-2 w-20 h-20 rounded-xl overflow-hidden bg-[#0f1117] border border-[#2e3147]">
                     <img src={form.imageUrl} alt="미리보기" className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = 'none')} />
                   </div>
                 )}
               </div>
 
               {/* 노출 여부 */}
-              <div className="flex items-center justify-between p-3 bg-[#1a1d29] rounded-xl border border-[#3d4362]">
+              <div className="flex items-center justify-between p-3 bg-[#0f1117] rounded-xl border border-[#2e3147]">
                 <div className="flex items-center gap-2">
                   <Eye size={15} className="text-gray-400" />
                   <span className="text-gray-300 text-sm">주문 페이지에 표시</span>
                 </div>
                 <button
                   onClick={() => setForm(f => ({ ...f, isAvailable: !f.isAvailable }))}
-                  className={`w-12 h-6 rounded-full transition-all relative ${form.isAvailable ? 'bg-[#00d9ff]' : 'bg-[#3d4362]'}`}
+                  className={`w-12 h-6 rounded-full transition-all relative ${form.isAvailable ? 'bg-[#22c55e]' : 'bg-[#2e3147]'}`}
                 >
                   <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${form.isAvailable ? 'left-6' : 'left-0.5'}`} />
                 </button>
               </div>
             </div>
 
-            <div className="px-5 py-4 border-t border-[#3d4362] flex gap-3">
-              <button onClick={closeForm} className="flex-1 py-3 bg-[#3d4362] text-gray-300 rounded-xl font-medium text-sm hover:bg-[#4d5382] transition-colors">
+            <div className="px-5 py-4 border-t border-[#2e3147] flex gap-3">
+              <button onClick={closeForm} className="flex-1 py-3 bg-[#2e3147] text-gray-300 rounded-xl font-medium text-sm hover:bg-[#4d5382] transition-colors">
                 취소
               </button>
-              <button onClick={handleSave} className="flex-1 py-3 bg-[#00d9ff] text-[#1a1d29] rounded-xl font-bold text-sm hover:bg-[#00d9ff]/90 transition-colors flex items-center justify-center gap-2">
+              <button onClick={handleSave} className="flex-1 py-3 bg-[#22c55e] text-[#0f1117] rounded-xl font-bold text-sm hover:bg-[#22c55e]/90 transition-colors flex items-center justify-center gap-2">
                 <Save size={14} />
                 저장
               </button>

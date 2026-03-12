@@ -19,7 +19,7 @@ const formatNum = (v: number) => v.toLocaleString('ko-KR');
 
 // 거래 유형 설정
 const TX_TYPES: { value: TransactionType; label: string; color: string; bg: string; icon: React.ElementType }[] = [
-  { value: 'sale',     label: '매출', color: 'text-[#00d9ff]', bg: 'bg-[#00d9ff]/20 border-[#00d9ff]/50', icon: ArrowUpRight },
+  { value: 'sale',     label: '매출', color: 'text-[#22c55e]', bg: 'bg-[#22c55e]/20 border-[#22c55e]/50', icon: ArrowUpRight },
   { value: 'purchase', label: '매입', color: 'text-yellow-400', bg: 'bg-yellow-400/20 border-yellow-400/50', icon: ArrowDownLeft },
   { value: 'receipt',  label: '수금', color: 'text-green-400', bg: 'bg-green-400/20 border-green-400/50', icon: CreditCard },
   { value: 'payment',  label: '지불', color: 'text-red-400', bg: 'bg-red-400/20 border-red-400/50', icon: Banknote },
@@ -310,16 +310,16 @@ export default function SalesPage() {
       {/* 헤더 */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-          <TrendingUp className="text-[#00d9ff]" size={28} />
+          <TrendingUp className="text-[#22c55e]" size={28} />
           매출 관리
         </h2>
         <div className="flex flex-wrap gap-2">
           {/* CSV 업로드 */}
-          <label className="flex items-center gap-2 px-3 py-2 bg-[#2d3142] hover:bg-[#3d4362] border border-[#3d4362] text-gray-300 rounded-xl text-xs cursor-pointer transition-colors">
+          <label className="flex items-center gap-2 px-3 py-2 bg-[#1c1f2e] hover:bg-[#2a2d3e] border border-[#2e3147] text-gray-300 rounded-xl text-xs cursor-pointer transition-colors">
             <Upload size={14} />매출 CSV
             <input ref={salesRef} type="file" accept=".csv" className="hidden" onChange={handleSalesUpload} />
           </label>
-          <label className="flex items-center gap-2 px-3 py-2 bg-[#2d3142] hover:bg-[#3d4362] border border-[#3d4362] text-gray-300 rounded-xl text-xs cursor-pointer transition-colors">
+          <label className="flex items-center gap-2 px-3 py-2 bg-[#1c1f2e] hover:bg-[#2a2d3e] border border-[#2e3147] text-gray-300 rounded-xl text-xs cursor-pointer transition-colors">
             <Upload size={14} />세금계산서 CSV
             <input ref={taxRef} type="file" accept=".csv" className="hidden" onChange={handleTaxUpload} />
           </label>
@@ -329,7 +329,7 @@ export default function SalesPage() {
       </div>
 
       {/* 메인 탭 */}
-      <div className="flex gap-1 bg-[#2d3142] rounded-xl p-1 border border-[#3d4362]">
+      <div className="flex gap-1 bg-[#1c1f2e] rounded-xl p-1 border border-[#2e3147]">
         {[
           { id: 'chart' as MainTab, label: '매출 현황', shortLabel: '현황', icon: TrendingUp },
           { id: 'ledger_customer' as MainTab, label: '거래처별', shortLabel: '거래처', icon: Users },
@@ -338,7 +338,7 @@ export default function SalesPage() {
         ].map(tab => (
           <button key={tab.id}
             onClick={() => setMainTab(tab.id)}
-            className={`flex items-center gap-1.5 px-2 sm:px-4 py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all flex-1 justify-center ${mainTab === tab.id ? 'bg-[#00d9ff] text-[#1a1d29]' : 'text-gray-400 hover:text-white'}`}
+            className={`flex items-center gap-1.5 px-2 sm:px-4 py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all flex-1 justify-center ${mainTab === tab.id ? 'bg-[#22c55e] text-[#0f1117]' : 'text-gray-400 hover:text-white'}`}
           >
             <tab.icon size={14} />
             <span className="hidden sm:inline">{tab.label}</span>
@@ -360,11 +360,11 @@ export default function SalesPage() {
             return (
               <div className="grid grid-cols-3 gap-4">
                 {[
-                  { label: '이번달 매출', value: formatKRW(total), color: '#00d9ff', icon: TrendingUp },
+                  { label: '이번달 매출', value: formatKRW(total), color: '#22c55e', icon: TrendingUp },
                   { label: '거래 건수', value: `${formatNum(thisMonthSales.length)}건`, color: '#7c3aed', icon: FileText },
                   { label: '거래 업체수', value: `${companies}개사`, color: '#f59e0b', icon: Users },
                 ].map((c, i) => (
-                  <div key={i} className="bg-[#2d3142] rounded-xl p-4 border border-[#3d4362]">
+                  <div key={i} className="bg-[#1c1f2e] rounded-xl p-4 border border-[#2e3147]">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-gray-400 text-xs">{c.label}</span>
                       <c.icon size={16} style={{ color: c.color }} />
@@ -378,19 +378,19 @@ export default function SalesPage() {
 
           {/* 차트 모드 전환 */}
           <div className="flex items-center gap-3">
-            <div className="flex bg-[#2d3142] rounded-xl p-1 border border-[#3d4362]">
+            <div className="flex bg-[#1c1f2e] rounded-xl p-1 border border-[#2e3147]">
               <button onClick={() => setViewMode('monthly')}
-                className={`px-4 py-1.5 rounded-lg text-sm transition-colors ${viewMode === 'monthly' ? 'bg-[#00d9ff] text-[#1a1d29] font-medium' : 'text-gray-400 hover:text-white'}`}>
+                className={`px-4 py-1.5 rounded-lg text-sm transition-colors ${viewMode === 'monthly' ? 'bg-[#22c55e] text-[#0f1117] font-medium' : 'text-gray-400 hover:text-white'}`}>
                 월별
               </button>
               <button onClick={() => setViewMode('daily')}
-                className={`px-4 py-1.5 rounded-lg text-sm transition-colors ${viewMode === 'daily' ? 'bg-[#00d9ff] text-[#1a1d29] font-medium' : 'text-gray-400 hover:text-white'}`}>
+                className={`px-4 py-1.5 rounded-lg text-sm transition-colors ${viewMode === 'daily' ? 'bg-[#22c55e] text-[#0f1117] font-medium' : 'text-gray-400 hover:text-white'}`}>
                 일별
               </button>
             </div>
             {viewMode === 'daily' && months.length > 0 && (
               <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)}
-                className="bg-[#2d3142] border border-[#3d4362] text-white rounded-xl px-3 py-1.5 text-sm">
+                className="bg-[#1c1f2e] border border-[#2e3147] text-white rounded-xl px-3 py-1.5 text-sm">
                 {months.map(m => <option key={m} value={m}>{m.replace('-', '년 ')}월</option>)}
               </select>
             )}
@@ -403,32 +403,32 @@ export default function SalesPage() {
               <p>매출 데이터를 업로드하거나 직접 입력해주세요.</p>
             </div>
           ) : viewMode === 'monthly' ? (
-            <div className="bg-[#2d3142] rounded-xl p-5 border border-[#3d4362]">
+            <div className="bg-[#1c1f2e] rounded-xl p-5 border border-[#2e3147]">
               <h3 className="text-white font-semibold mb-4">월별 매출 / 매입 추이</h3>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={monthlyData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#3d4362" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2e3147" />
                   <XAxis dataKey="label" tick={{ fill: '#9ca3af', fontSize: 11 }} />
                   <YAxis tick={{ fill: '#9ca3af', fontSize: 10 }} tickFormatter={v => `${(v / 1000000).toFixed(0)}M`} />
-                  <Tooltip contentStyle={{ background: '#1a1d29', border: '1px solid #3d4362', borderRadius: 8 }}
+                  <Tooltip contentStyle={{ background: '#1c1f2e', border: '1px solid #4a4f6e', borderRadius: 8 }}
                     formatter={(v: number, name: string) => [formatKRW(v), name === 'sale' ? '매출' : '매입']} />
                   <Legend formatter={v => v === 'sale' ? '매출' : '매입'} />
-                  <Bar dataKey="sale" fill="#00d9ff" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="sale" fill="#22c55e" radius={[3, 3, 0, 0]} />
                   <Bar dataKey="purchase" fill="#f59e0b" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="bg-[#2d3142] rounded-xl p-5 border border-[#3d4362]">
+            <div className="bg-[#1c1f2e] rounded-xl p-5 border border-[#2e3147]">
               <h3 className="text-white font-semibold mb-4">{selectedMonth.replace('-', '년 ')}월 일별 매출</h3>
               <ResponsiveContainer width="100%" height={260}>
                 <LineChart data={dailyData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#3d4362" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2e3147" />
                   <XAxis dataKey="date" tick={{ fill: '#9ca3af', fontSize: 11 }} />
                   <YAxis tick={{ fill: '#9ca3af', fontSize: 10 }} tickFormatter={v => `${(v / 10000).toFixed(0)}만`} />
-                  <Tooltip contentStyle={{ background: '#1a1d29', border: '1px solid #3d4362', borderRadius: 8 }}
+                  <Tooltip contentStyle={{ background: '#1c1f2e', border: '1px solid #4a4f6e', borderRadius: 8 }}
                     formatter={(v: number) => [formatKRW(v), '매출']} />
-                  <Line type="monotone" dataKey="total" stroke="#00d9ff" strokeWidth={2} dot={{ fill: '#00d9ff', r: 3 }} />
+                  <Line type="monotone" dataKey="total" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e', r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -436,15 +436,15 @@ export default function SalesPage() {
 
           {/* 최근 거래 테이블 */}
           {salesRecords.length > 0 && (
-            <div className="bg-[#2d3142] rounded-xl border border-[#3d4362] overflow-hidden">
-              <div className="p-4 border-b border-[#3d4362] flex items-center justify-between">
+            <div className="bg-[#1c1f2e] rounded-xl border border-[#2e3147] overflow-hidden">
+              <div className="p-4 border-b border-[#2e3147] flex items-center justify-between">
                 <h3 className="text-white font-semibold">최근 거래 내역</h3>
                 <span className="text-gray-500 text-xs">총 {formatNum(salesRecords.length)}건</span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[#3d4362]">
+                    <tr className="border-b border-[#2e3147]">
                       {['날짜', '유형', '거래처', '품목', '수량', '단가', '공급가액', ''].map(h => (
                         <th key={h} className="text-left text-gray-400 px-4 py-3 font-medium whitespace-nowrap">{h}</th>
                       ))}
@@ -452,17 +452,17 @@ export default function SalesPage() {
                   </thead>
                   <tbody>
                     {salesRecords.slice(0, 30).map(r => (
-                      <tr key={r.id} className="border-b border-[#3d4362]/40 hover:bg-[#3d4362]/20">
+                      <tr key={r.id} className="border-b border-[#2e3147]/40 hover:bg-[#2a2d3e]/20">
                         <td className="px-4 py-3 text-gray-400 whitespace-nowrap text-xs">{r.date}</td>
                         <td className="px-4 py-3"><TxBadge type={r.transactionType} /></td>
                         <td className="px-4 py-3 text-white whitespace-nowrap max-w-[120px] truncate">{r.companyName}</td>
                         <td className="px-4 py-3 text-gray-300 whitespace-nowrap max-w-[120px] truncate">{r.productName || '-'}</td>
                         <td className="px-4 py-3 text-gray-300 whitespace-nowrap">{r.quantity > 0 ? `${formatNum(r.quantity)}${r.unit || 'kg'}` : '-'}</td>
                         <td className="px-4 py-3 text-gray-400">{r.unitPrice > 0 ? formatKRW(r.unitPrice) : '-'}</td>
-                        <td className="px-4 py-3 text-[#00d9ff] font-semibold whitespace-nowrap">{formatKRW(r.totalAmount)}</td>
+                        <td className="px-4 py-3 text-[#22c55e] font-semibold whitespace-nowrap">{formatKRW(r.totalAmount)}</td>
                         <td className="px-4 py-3">
                           <div className="flex gap-1">
-                            <button onClick={() => handleEdit(r)} className="text-gray-500 hover:text-[#00d9ff] transition-colors"><Edit2 size={13} /></button>
+                            <button onClick={() => handleEdit(r)} className="text-gray-500 hover:text-[#22c55e] transition-colors"><Edit2 size={13} /></button>
                             <button onClick={() => handleDelete(r.id)} className="text-gray-500 hover:text-red-400 transition-colors"><Trash2 size={13} /></button>
                           </div>
                         </td>
@@ -480,12 +480,12 @@ export default function SalesPage() {
       {mainTab === 'ledger_customer' && (
         <div className="space-y-4">
           {/* 필터 */}
-          <div className="bg-[#2d3142] rounded-xl p-4 border border-[#3d4362]">
+          <div className="bg-[#1c1f2e] rounded-xl p-4 border border-[#2e3147]">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="md:col-span-2">
                 <label className="text-gray-400 text-xs mb-1.5 block">거래처 선택</label>
                 <select value={selectedCustomer} onChange={e => setSelectedCustomer(e.target.value)}
-                  className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-[#00d9ff] focus:outline-none">
+                  className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-[#22c55e] focus:outline-none">
                   <option value="">전체 거래처</option>
                   {uniqueCompanies.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -493,7 +493,7 @@ export default function SalesPage() {
               <div>
                 <label className="text-gray-400 text-xs mb-1.5 block">거래 유형</label>
                 <select value={custTxFilter} onChange={e => setCustTxFilter(e.target.value as TransactionType | 'all')}
-                  className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-[#00d9ff] focus:outline-none">
+                  className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-[#22c55e] focus:outline-none">
                   <option value="all">전체</option>
                   {TX_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </select>
@@ -504,22 +504,22 @@ export default function SalesPage() {
                   <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
                   <input type="text" placeholder="거래처명..." value={custSearch}
                     onChange={e => setCustSearch(e.target.value)}
-                    className="w-full pl-8 bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-[#00d9ff] focus:outline-none" />
+                    className="w-full pl-8 bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-[#22c55e] focus:outline-none" />
                 </div>
               </div>
               <div>
                 <label className="text-gray-400 text-xs mb-1.5 block">시작일</label>
                 <input type="date" value={custDateFrom} onChange={e => setCustDateFrom(e.target.value)}
-                  className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-[#00d9ff] focus:outline-none" />
+                  className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-[#22c55e] focus:outline-none" />
               </div>
               <div>
                 <label className="text-gray-400 text-xs mb-1.5 block">종료일</label>
                 <input type="date" value={custDateTo} onChange={e => setCustDateTo(e.target.value)}
-                  className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-[#00d9ff] focus:outline-none" />
+                  className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-[#22c55e] focus:outline-none" />
               </div>
               <div className="flex items-end">
                 <button onClick={() => exportCSV(customerLedger, `거래처별_거래장_${new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', '')}.csv`)}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-[#3d4362] hover:bg-[#4d5382] text-gray-300 rounded-lg text-sm transition-colors">
+                  className="flex items-center gap-1.5 px-4 py-2 bg-[#2e3147] hover:bg-[#4d5382] text-gray-300 rounded-lg text-sm transition-colors">
                   <Download size={14} />내보내기
                 </button>
               </div>
@@ -528,14 +528,14 @@ export default function SalesPage() {
 
           {/* 거래처별 합계 요약 */}
           {!selectedCustomer && customerSummary.length > 0 && (
-            <div className="bg-[#2d3142] rounded-xl border border-[#3d4362] overflow-hidden">
-              <div className="p-3 border-b border-[#3d4362]">
+            <div className="bg-[#1c1f2e] rounded-xl border border-[#2e3147] overflow-hidden">
+              <div className="p-3 border-b border-[#2e3147]">
                 <h3 className="text-white font-semibold text-sm">거래처별 요약</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[#3d4362]">
+                    <tr className="border-b border-[#2e3147]">
                       {['거래처', '매출', '매입', '수금', '지불', '건수'].map(h => (
                         <th key={h} className="text-left text-gray-400 px-4 py-2.5 font-medium whitespace-nowrap">{h}</th>
                       ))}
@@ -543,10 +543,10 @@ export default function SalesPage() {
                   </thead>
                   <tbody>
                     {customerSummary.map(c => (
-                      <tr key={c.name} className="border-b border-[#3d4362]/40 hover:bg-[#3d4362]/20 cursor-pointer"
+                      <tr key={c.name} className="border-b border-[#2e3147]/40 hover:bg-[#2a2d3e]/20 cursor-pointer"
                         onClick={() => setSelectedCustomer(c.name)}>
                         <td className="px-4 py-2.5 text-white font-medium">{c.name}</td>
-                        <td className="px-4 py-2.5 text-[#00d9ff]">{c.sale > 0 ? formatKRW(c.sale) : '-'}</td>
+                        <td className="px-4 py-2.5 text-[#22c55e]">{c.sale > 0 ? formatKRW(c.sale) : '-'}</td>
                         <td className="px-4 py-2.5 text-yellow-400">{c.purchase > 0 ? formatKRW(c.purchase) : '-'}</td>
                         <td className="px-4 py-2.5 text-green-400">{c.receipt > 0 ? formatKRW(c.receipt) : '-'}</td>
                         <td className="px-4 py-2.5 text-red-400">{c.payment > 0 ? formatKRW(c.payment) : '-'}</td>
@@ -560,8 +560,8 @@ export default function SalesPage() {
           )}
 
           {/* 거래 상세 */}
-          <div className="bg-[#2d3142] rounded-xl border border-[#3d4362] overflow-hidden">
-            <div className="p-4 border-b border-[#3d4362] flex items-center justify-between">
+          <div className="bg-[#1c1f2e] rounded-xl border border-[#2e3147] overflow-hidden">
+            <div className="p-4 border-b border-[#2e3147] flex items-center justify-between">
               <h3 className="text-white font-semibold">{selectedCustomer || '전체'} 거래 내역</h3>
               <span className="text-gray-500 text-xs">{formatNum(customerLedger.length)}건</span>
             </div>
@@ -571,7 +571,7 @@ export default function SalesPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[#3d4362]">
+                    <tr className="border-b border-[#2e3147]">
                       {['날짜', '유형', '거래처', '품목', '수량', '단가', '공급가액', '메모', ''].map(h => (
                         <th key={h} className="text-left text-gray-400 px-4 py-3 font-medium whitespace-nowrap">{h}</th>
                       ))}
@@ -579,7 +579,7 @@ export default function SalesPage() {
                   </thead>
                   <tbody>
                     {customerLedger.map(r => (
-                      <tr key={r.id} className="border-b border-[#3d4362]/40 hover:bg-[#3d4362]/20">
+                      <tr key={r.id} className="border-b border-[#2e3147]/40 hover:bg-[#2a2d3e]/20">
                         <td className="px-4 py-3 text-gray-400 whitespace-nowrap text-xs">{r.date}</td>
                         <td className="px-4 py-3"><TxBadge type={r.transactionType} /></td>
                         <td className="px-4 py-3 text-white whitespace-nowrap">{r.companyName}</td>
@@ -587,14 +587,14 @@ export default function SalesPage() {
                         <td className="px-4 py-3 text-gray-300 whitespace-nowrap">{r.quantity > 0 ? `${formatNum(r.quantity)}${r.unit || ''}` : '-'}</td>
                         <td className="px-4 py-3 text-gray-400">{r.unitPrice > 0 ? formatKRW(r.unitPrice) : '-'}</td>
                         <td className="px-4 py-3 font-semibold whitespace-nowrap">
-                          <span className={r.transactionType === 'sale' || !r.transactionType ? 'text-[#00d9ff]' : r.transactionType === 'purchase' ? 'text-yellow-400' : r.transactionType === 'receipt' ? 'text-green-400' : 'text-red-400'}>
+                          <span className={r.transactionType === 'sale' || !r.transactionType ? 'text-[#22c55e]' : r.transactionType === 'purchase' ? 'text-yellow-400' : r.transactionType === 'receipt' ? 'text-green-400' : 'text-red-400'}>
                             {formatKRW(r.totalAmount)}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-gray-500 max-w-[100px] truncate">{r.memo || '-'}</td>
                         <td className="px-4 py-3">
                           <div className="flex gap-1">
-                            <button onClick={() => handleEdit(r)} className="text-gray-500 hover:text-[#00d9ff]"><Edit2 size={13} /></button>
+                            <button onClick={() => handleEdit(r)} className="text-gray-500 hover:text-[#22c55e]"><Edit2 size={13} /></button>
                             <button onClick={() => handleDelete(r.id)} className="text-gray-500 hover:text-red-400"><Trash2 size={13} /></button>
                           </div>
                         </td>
@@ -612,22 +612,22 @@ export default function SalesPage() {
       {mainTab === 'ledger_period' && (
         <div className="space-y-4">
           {/* 필터 */}
-          <div className="bg-[#2d3142] rounded-xl p-4 border border-[#3d4362]">
+          <div className="bg-[#1c1f2e] rounded-xl p-4 border border-[#2e3147]">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
                 <label className="text-gray-400 text-xs mb-1.5 block">시작일</label>
                 <input type="date" value={periodFrom} onChange={e => setPeriodFrom(e.target.value)}
-                  className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-[#00d9ff] focus:outline-none" />
+                  className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-[#22c55e] focus:outline-none" />
               </div>
               <div>
                 <label className="text-gray-400 text-xs mb-1.5 block">종료일</label>
                 <input type="date" value={periodTo} onChange={e => setPeriodTo(e.target.value)}
-                  className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-[#00d9ff] focus:outline-none" />
+                  className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-[#22c55e] focus:outline-none" />
               </div>
               <div>
                 <label className="text-gray-400 text-xs mb-1.5 block">거래 유형</label>
                 <select value={periodTxFilter} onChange={e => setPeriodTxFilter(e.target.value as TransactionType | 'all')}
-                  className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-[#00d9ff] focus:outline-none">
+                  className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-[#22c55e] focus:outline-none">
                   <option value="all">전체</option>
                   {TX_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </select>
@@ -638,7 +638,7 @@ export default function SalesPage() {
                   <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
                   <input type="text" placeholder="거래처/품목..." value={periodSearch}
                     onChange={e => setPeriodSearch(e.target.value)}
-                    className="w-full pl-8 bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-[#00d9ff] focus:outline-none" />
+                    className="w-full pl-8 bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-[#22c55e] focus:outline-none" />
                 </div>
               </div>
             </div>
@@ -651,12 +651,12 @@ export default function SalesPage() {
                 { label: '올해', fn: () => { const y = new Date().getFullYear(); setPeriodFrom(`${y}-01-01`); setPeriodTo(`${y}-12-31`); }},
               ].map(b => (
                 <button key={b.label} onClick={b.fn}
-                  className="px-3 py-1.5 bg-[#1a1d29] hover:bg-[#3d4362] border border-[#3d4362] text-gray-400 hover:text-white rounded-lg text-xs transition-colors">
+                  className="px-3 py-1.5 bg-[#0f1117] hover:bg-[#2a2d3e] border border-[#2e3147] text-gray-400 hover:text-white rounded-lg text-xs transition-colors">
                   {b.label}
                 </button>
               ))}
               <button onClick={() => exportCSV(periodLedger, `기간별_거래장_${periodFrom}_${periodTo}.csv`)}
-                className="ml-auto flex items-center gap-1.5 px-4 py-1.5 bg-[#3d4362] hover:bg-[#4d5382] text-gray-300 rounded-lg text-xs transition-colors">
+                className="ml-auto flex items-center gap-1.5 px-4 py-1.5 bg-[#2e3147] hover:bg-[#4d5382] text-gray-300 rounded-lg text-xs transition-colors">
                 <Download size={13} />내보내기
               </button>
             </div>
@@ -665,12 +665,12 @@ export default function SalesPage() {
           {/* 요약 카드 */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: '매출 합계', value: formatKRW(periodTotals.sale), color: '#00d9ff' },
+              { label: '매출 합계', value: formatKRW(periodTotals.sale), color: '#22c55e' },
               { label: '매입 합계', value: formatKRW(periodTotals.purchase), color: '#f59e0b' },
               { label: '수금 합계', value: formatKRW(periodTotals.receipt), color: '#10b981' },
               { label: '지불 합계', value: formatKRW(periodTotals.payment), color: '#ef4444' },
             ].map((c, i) => (
-              <div key={i} className="bg-[#2d3142] rounded-xl p-3 border border-[#3d4362]">
+              <div key={i} className="bg-[#1c1f2e] rounded-xl p-3 border border-[#2e3147]">
                 <div className="text-gray-400 text-xs mb-1">{c.label}</div>
                 <div className="font-bold" style={{ color: c.color }}>{c.value}</div>
               </div>
@@ -678,8 +678,8 @@ export default function SalesPage() {
           </div>
 
           {/* 거래 목록 */}
-          <div className="bg-[#2d3142] rounded-xl border border-[#3d4362] overflow-hidden">
-            <div className="p-4 border-b border-[#3d4362] flex items-center justify-between">
+          <div className="bg-[#1c1f2e] rounded-xl border border-[#2e3147] overflow-hidden">
+            <div className="p-4 border-b border-[#2e3147] flex items-center justify-between">
               <h3 className="text-white font-semibold">기간 내 거래 내역</h3>
               <span className="text-gray-500 text-xs">{formatNum(periodLedger.length)}건</span>
             </div>
@@ -689,7 +689,7 @@ export default function SalesPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[#3d4362]">
+                    <tr className="border-b border-[#2e3147]">
                       {['날짜', '유형', '거래처', '품목', '수량', '단가', '공급가액', '메모', ''].map(h => (
                         <th key={h} className="text-left text-gray-400 px-4 py-3 font-medium whitespace-nowrap">{h}</th>
                       ))}
@@ -697,7 +697,7 @@ export default function SalesPage() {
                   </thead>
                   <tbody>
                     {periodLedger.map(r => (
-                      <tr key={r.id} className="border-b border-[#3d4362]/40 hover:bg-[#3d4362]/20">
+                      <tr key={r.id} className="border-b border-[#2e3147]/40 hover:bg-[#2a2d3e]/20">
                         <td className="px-4 py-3 text-gray-400 whitespace-nowrap text-xs">{r.date}</td>
                         <td className="px-4 py-3"><TxBadge type={r.transactionType} /></td>
                         <td className="px-4 py-3 text-white whitespace-nowrap max-w-[120px] truncate">{r.companyName}</td>
@@ -705,14 +705,14 @@ export default function SalesPage() {
                         <td className="px-4 py-3 text-gray-300 whitespace-nowrap">{r.quantity > 0 ? `${formatNum(r.quantity)}${r.unit || ''}` : '-'}</td>
                         <td className="px-4 py-3 text-gray-400">{r.unitPrice > 0 ? formatKRW(r.unitPrice) : '-'}</td>
                         <td className="px-4 py-3 font-semibold whitespace-nowrap">
-                          <span className={r.transactionType === 'sale' || !r.transactionType ? 'text-[#00d9ff]' : r.transactionType === 'purchase' ? 'text-yellow-400' : r.transactionType === 'receipt' ? 'text-green-400' : 'text-red-400'}>
+                          <span className={r.transactionType === 'sale' || !r.transactionType ? 'text-[#22c55e]' : r.transactionType === 'purchase' ? 'text-yellow-400' : r.transactionType === 'receipt' ? 'text-green-400' : 'text-red-400'}>
                             {formatKRW(r.totalAmount)}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-gray-500 max-w-[100px] truncate">{r.memo || '-'}</td>
                         <td className="px-4 py-3">
                           <div className="flex gap-1">
-                            <button onClick={() => handleEdit(r)} className="text-gray-500 hover:text-[#00d9ff]"><Edit2 size={13} /></button>
+                            <button onClick={() => handleEdit(r)} className="text-gray-500 hover:text-[#22c55e]"><Edit2 size={13} /></button>
                             <button onClick={() => handleDelete(r.id)} className="text-gray-500 hover:text-red-400"><Trash2 size={13} /></button>
                           </div>
                         </td>
@@ -733,7 +733,7 @@ export default function SalesPage() {
           {!showForm && (
             <button
               onClick={() => { setShowForm(true); setEditingId(null); setForm({ ...EMPTY_FORM }); setCompanySearch(''); setProductSearch(''); }}
-              className="w-full flex items-center justify-center gap-2 py-3.5 border-2 border-dashed border-[#3d4362] hover:border-[#00d9ff] text-gray-400 hover:text-[#00d9ff] rounded-xl transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-3.5 border-2 border-dashed border-[#2e3147] hover:border-[#22c55e] text-gray-400 hover:text-[#22c55e] rounded-xl transition-colors"
             >
               <Plus size={20} />
               새 거래 입력
@@ -742,9 +742,9 @@ export default function SalesPage() {
 
           {/* 입력 폼 */}
           {showForm && (
-            <div className="bg-[#2d3142] border border-[#00d9ff]/30 rounded-xl p-5">
+            <div className="bg-[#1c1f2e] border border-[#22c55e]/30 rounded-xl p-5">
               <h3 className="text-white font-semibold mb-5 flex items-center gap-2">
-                <Plus size={16} className="text-[#00d9ff]" />
+                <Plus size={16} className="text-[#22c55e]" />
                 {editingId ? '거래 수정' : '새 거래 입력'}
               </h3>
 
@@ -756,7 +756,7 @@ export default function SalesPage() {
                     <button key={t.value}
                       onClick={() => handleFormChange('transactionType', t.value)}
                       className={`flex items-center gap-2 px-5 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
-                        form.transactionType === t.value ? `${t.bg} ${t.color} border-2` : 'bg-[#1a1d29] text-gray-400 border-[#3d4362] hover:border-[#4d5382]'
+                        form.transactionType === t.value ? `${t.bg} ${t.color} border-2` : 'bg-[#0f1117] text-gray-400 border-[#2e3147] hover:border-[#4d5382]'
                       }`}
                     >
                       <t.icon size={16} />
@@ -774,7 +774,7 @@ export default function SalesPage() {
                   </label>
                   <input type="date" value={form.date}
                     onChange={e => handleFormChange('date', e.target.value)}
-                    className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#00d9ff] focus:outline-none"
+                    className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#22c55e] focus:outline-none"
                   />
                 </div>
 
@@ -792,13 +792,13 @@ export default function SalesPage() {
                     }}
                     onFocus={() => setShowCompanySug(true)}
                     onBlur={() => setTimeout(() => setShowCompanySug(false), 150)}
-                    className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#00d9ff] focus:outline-none"
+                    className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#22c55e] focus:outline-none"
                   />
                   {showCompanySug && companySuggestions.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 z-20 bg-[#1a1d29] border border-[#3d4362] rounded-lg mt-1 shadow-xl max-h-40 overflow-y-auto">
+                    <div className="absolute top-full left-0 right-0 z-20 bg-[#0f1117] border border-[#2e3147] rounded-lg mt-1 shadow-xl max-h-40 overflow-y-auto">
                       {companySuggestions.map(s => (
                         <button key={s} onMouseDown={() => { setCompanySearch(s); handleFormChange('companyName', s); setShowCompanySug(false); }}
-                          className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-[#3d4362] hover:text-white transition-colors">
+                          className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-[#2a2d3e] hover:text-white transition-colors">
                           {s}
                         </button>
                       ))}
@@ -820,10 +820,10 @@ export default function SalesPage() {
                     }}
                     onFocus={() => setShowProductSug(true)}
                     onBlur={() => setTimeout(() => setShowProductSug(false), 150)}
-                    className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#00d9ff] focus:outline-none"
+                    className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#22c55e] focus:outline-none"
                   />
                   {showProductSug && productSuggestions.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 z-20 bg-[#1a1d29] border border-[#3d4362] rounded-lg mt-1 shadow-xl max-h-40 overflow-y-auto">
+                    <div className="absolute top-full left-0 right-0 z-20 bg-[#0f1117] border border-[#2e3147] rounded-lg mt-1 shadow-xl max-h-40 overflow-y-auto">
                       {productSuggestions.map(s => (
                         <button key={s.name} onMouseDown={() => {
                           setProductSearch(s.name);
@@ -834,7 +834,7 @@ export default function SalesPage() {
                           }));
                           setShowProductSug(false);
                         }}
-                          className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-[#3d4362] hover:text-white transition-colors flex items-center justify-between">
+                          className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-[#2a2d3e] hover:text-white transition-colors flex items-center justify-between">
                           <span>{s.name}</span>
                           <span className="text-gray-500 text-xs">{s.unit}{s.price > 0 ? ` · ${formatKRW(s.price)}` : ''}</span>
                         </button>
@@ -849,13 +849,13 @@ export default function SalesPage() {
                   <div className="flex gap-1 flex-wrap mb-1">
                     {['kg', '포대', '박스', '개'].map(u => (
                       <button key={u} type="button" onClick={() => handleFormChange('unit', u)}
-                        className={`px-2.5 py-1 rounded text-xs transition-colors ${form.unit === u ? 'bg-[#00d9ff] text-[#1a1d29]' : 'bg-[#1a1d29] text-gray-400 border border-[#3d4362]'}`}>
+                        className={`px-2.5 py-1 rounded text-xs transition-colors ${form.unit === u ? 'bg-[#22c55e] text-[#0f1117]' : 'bg-[#0f1117] text-gray-400 border border-[#2e3147]'}`}>
                         {u}
                       </button>
                     ))}
                   </div>
                   <input type="text" value={form.unit} onChange={e => handleFormChange('unit', e.target.value)}
-                    className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-1.5 text-sm focus:border-[#00d9ff] focus:outline-none" />
+                    className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-1.5 text-sm focus:border-[#22c55e] focus:outline-none" />
                 </div>
 
                 {/* 수량 */}
@@ -864,7 +864,7 @@ export default function SalesPage() {
                   <input type="number" min="0" step="0.1" placeholder="0"
                     value={form.quantity || ''}
                     onChange={e => handleFormChange('quantity', e.target.value)}
-                    className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#00d9ff] focus:outline-none"
+                    className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#22c55e] focus:outline-none"
                   />
                 </div>
 
@@ -874,7 +874,7 @@ export default function SalesPage() {
                   <input type="number" min="0" placeholder="0"
                     value={form.unitPrice || ''}
                     onChange={e => handleFormChange('unitPrice', e.target.value)}
-                    className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#00d9ff] focus:outline-none"
+                    className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#22c55e] focus:outline-none"
                   />
                 </div>
 
@@ -882,15 +882,15 @@ export default function SalesPage() {
                 <div>
                   <label className="text-gray-400 text-xs mb-1.5 block">
                     공급가액 (원)
-                    <span className="ml-2 text-[#00d9ff] text-xs">← 수량×단가 자동계산</span>
+                    <span className="ml-2 text-[#22c55e] text-xs">← 수량×단가 자동계산</span>
                   </label>
                   <input type="number" min="0" placeholder="자동계산 또는 직접입력"
                     value={form.totalAmount || ''}
                     onChange={e => setForm(prev => ({ ...prev, totalAmount: Number(e.target.value) }))}
-                    className="w-full bg-[#1a1d29] border border-[#00d9ff]/40 text-[#00d9ff] font-bold rounded-lg px-3 py-2.5 text-sm focus:border-[#00d9ff] focus:outline-none"
+                    className="w-full bg-[#0f1117] border border-[#22c55e]/40 text-[#22c55e] font-bold rounded-lg px-3 py-2.5 text-sm focus:border-[#22c55e] focus:outline-none"
                   />
                   {form.totalAmount > 0 && (
-                    <p className="text-[#00d9ff] text-xs mt-1 font-semibold">{formatKRW(form.totalAmount)}</p>
+                    <p className="text-[#22c55e] text-xs mt-1 font-semibold">{formatKRW(form.totalAmount)}</p>
                   )}
                 </div>
 
@@ -899,7 +899,7 @@ export default function SalesPage() {
                   <label className="text-gray-400 text-xs mb-1.5 block">메모</label>
                   <input type="text" placeholder="비고사항 입력" value={form.memo}
                     onChange={e => handleFormChange('memo', e.target.value)}
-                    className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#00d9ff] focus:outline-none"
+                    className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2.5 text-sm focus:border-[#22c55e] focus:outline-none"
                   />
                 </div>
               </div>
@@ -908,11 +908,11 @@ export default function SalesPage() {
 
               <div className="flex gap-2 mt-5">
                 <button onClick={handleSave}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-[#00d9ff] text-[#1a1d29] font-bold rounded-xl hover:bg-[#00b8d9] text-sm transition-colors">
+                  className="flex items-center gap-2 px-6 py-2.5 bg-[#22c55e] text-[#0f1117] font-bold rounded-xl hover:bg-[#16a34a] text-sm transition-colors">
                   <Save size={16} />{editingId ? '수정 완료' : '저장'}
                 </button>
                 <button onClick={() => { setShowForm(false); setEditingId(null); setFormMsg(''); }}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-[#3d4362] text-gray-300 rounded-xl hover:bg-[#4d5382] text-sm transition-colors">
+                  className="flex items-center gap-2 px-5 py-2.5 bg-[#2e3147] text-gray-300 rounded-xl hover:bg-[#4d5382] text-sm transition-colors">
                   <X size={16} />취소
                 </button>
               </div>
@@ -921,14 +921,14 @@ export default function SalesPage() {
 
           {/* 최근 입력된 거래 목록 */}
           {salesRecords.length > 0 && (
-            <div className="bg-[#2d3142] rounded-xl border border-[#3d4362] overflow-hidden">
-              <div className="p-4 border-b border-[#3d4362]">
+            <div className="bg-[#1c1f2e] rounded-xl border border-[#2e3147] overflow-hidden">
+              <div className="p-4 border-b border-[#2e3147]">
                 <h3 className="text-white font-semibold">전체 거래 내역 ({formatNum(salesRecords.length)}건)</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[#3d4362]">
+                    <tr className="border-b border-[#2e3147]">
                       {['날짜', '유형', '거래처', '품목', '수량', '단가', '공급가액', '메모', ''].map(h => (
                         <th key={h} className="text-left text-gray-400 px-4 py-3 font-medium whitespace-nowrap">{h}</th>
                       ))}
@@ -936,7 +936,7 @@ export default function SalesPage() {
                   </thead>
                   <tbody>
                     {salesRecords.slice(0, 100).map(r => (
-                      <tr key={r.id} className="border-b border-[#3d4362]/40 hover:bg-[#3d4362]/20">
+                      <tr key={r.id} className="border-b border-[#2e3147]/40 hover:bg-[#2a2d3e]/20">
                         <td className="px-4 py-3 text-gray-400 whitespace-nowrap text-xs">{r.date}</td>
                         <td className="px-4 py-3"><TxBadge type={r.transactionType} /></td>
                         <td className="px-4 py-3 text-white whitespace-nowrap">{r.companyName}</td>
@@ -944,14 +944,14 @@ export default function SalesPage() {
                         <td className="px-4 py-3 text-gray-300 whitespace-nowrap">{r.quantity > 0 ? `${formatNum(r.quantity)}${r.unit || ''}` : '-'}</td>
                         <td className="px-4 py-3 text-gray-400">{r.unitPrice > 0 ? formatKRW(r.unitPrice) : '-'}</td>
                         <td className="px-4 py-3 font-semibold whitespace-nowrap">
-                          <span className={r.transactionType === 'sale' || !r.transactionType ? 'text-[#00d9ff]' : r.transactionType === 'purchase' ? 'text-yellow-400' : r.transactionType === 'receipt' ? 'text-green-400' : 'text-red-400'}>
+                          <span className={r.transactionType === 'sale' || !r.transactionType ? 'text-[#22c55e]' : r.transactionType === 'purchase' ? 'text-yellow-400' : r.transactionType === 'receipt' ? 'text-green-400' : 'text-red-400'}>
                             {formatKRW(r.totalAmount)}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-gray-500 max-w-[100px] truncate">{r.memo || '-'}</td>
                         <td className="px-4 py-3">
                           <div className="flex gap-1">
-                            <button onClick={() => handleEdit(r)} className="text-gray-500 hover:text-[#00d9ff]"><Edit2 size={13} /></button>
+                            <button onClick={() => handleEdit(r)} className="text-gray-500 hover:text-[#22c55e]"><Edit2 size={13} /></button>
                             <button onClick={() => handleDelete(r.id)} className="text-gray-500 hover:text-red-400"><Trash2 size={13} /></button>
                           </div>
                         </td>

@@ -42,17 +42,17 @@ export default function LoginPage({ onLogin }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-[#1a1d29] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#0f1117] flex items-center justify-center p-4">
       {/* 배경 그라데이션 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-[#00d9ff]/10 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-[#22c55e]/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-[#7c3aed]/10 rounded-full blur-3xl" />
       </div>
 
       <div className="w-full max-w-md relative z-10">
         {/* 로고 */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-[#00d9ff] to-[#7c3aed] mb-4 shadow-lg shadow-[#7c3aed]/30">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-[#22c55e] to-[#7c3aed] mb-4 shadow-lg shadow-[#7c3aed]/30">
             <span className="text-4xl">🌾</span>
           </div>
           <h1 className="text-3xl font-bold text-white mb-1">쌀집 대시보드</h1>
@@ -60,12 +60,12 @@ export default function LoginPage({ onLogin }: Props) {
         </div>
 
         {/* 카드 */}
-        <div className="bg-[#2d3142] rounded-2xl p-8 border border-[#3d4362] shadow-xl">
+        <div className="bg-[#1c1f2e] rounded-2xl p-8 border border-[#2e3147] shadow-xl">
           {/* 탭 */}
-          <div className="flex bg-[#1a1d29] rounded-xl p-1 mb-6">
+          <div className="flex bg-[#0f1117] rounded-xl p-1 mb-6">
             <button
               onClick={() => { setMode('login'); setError(''); setSuccess(''); }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${mode === 'login' ? 'bg-[#00d9ff] text-[#1a1d29] shadow' : 'text-gray-400 hover:text-white'}`}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${mode === 'login' ? 'bg-[#22c55e] text-[#0f1117] shadow' : 'text-gray-400 hover:text-white'}`}
             >
               <LogIn size={15} />
               로그인
@@ -91,7 +91,7 @@ export default function LoginPage({ onLogin }: Props) {
                     value={displayName}
                     onChange={e => setDisplayName(e.target.value)}
                     placeholder="예: 황금쌀집"
-                    className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:border-[#7c3aed] focus:outline-none focus:ring-1 focus:ring-[#7c3aed] transition-colors"
+                    className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:border-[#7c3aed] focus:outline-none focus:ring-1 focus:ring-[#7c3aed] transition-colors"
                   />
                 </div>
               </div>
@@ -108,7 +108,7 @@ export default function LoginPage({ onLogin }: Props) {
                   onChange={e => setUsername(e.target.value)}
                   placeholder="아이디 입력"
                   autoComplete="username"
-                  className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:border-[#00d9ff] focus:outline-none focus:ring-1 focus:ring-[#00d9ff] transition-colors"
+                  className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:border-[#22c55e] focus:outline-none focus:ring-1 focus:ring-[#22c55e] transition-colors"
                 />
               </div>
             </div>
@@ -124,7 +124,7 @@ export default function LoginPage({ onLogin }: Props) {
                   onChange={e => setPassword(e.target.value)}
                   placeholder={mode === 'register' ? '6자 이상 입력' : '비밀번호 입력'}
                   autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                  className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-xl pl-10 pr-12 py-3 text-sm focus:border-[#00d9ff] focus:outline-none focus:ring-1 focus:ring-[#00d9ff] transition-colors"
+                  className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-xl pl-10 pr-12 py-3 text-sm focus:border-[#22c55e] focus:outline-none focus:ring-1 focus:ring-[#22c55e] transition-colors"
                 />
                 <button
                   type="button"
@@ -157,7 +157,7 @@ export default function LoginPage({ onLogin }: Props) {
               className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all ${
                 loading ? 'opacity-50 cursor-not-allowed' :
                 mode === 'login'
-                  ? 'bg-gradient-to-r from-[#00d9ff] to-[#00b8d9] text-[#1a1d29] hover:shadow-lg hover:shadow-[#00d9ff]/20 hover:scale-[1.01]'
+                  ? 'bg-gradient-to-r from-[#22c55e] to-[#16a34a] text-[#0f1117] hover:shadow-lg hover:shadow-[#22c55e]/20 hover:scale-[1.01]'
                   : 'bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] text-white hover:shadow-lg hover:shadow-[#7c3aed]/20 hover:scale-[1.01]'
               }`}
             >

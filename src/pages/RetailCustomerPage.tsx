@@ -16,7 +16,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 // 등급 설정
 const GRADES: { value: RetailGrade; label: string; color: string; bg: string; icon: React.ElementType }[] = [
   { value: 'vip',     label: 'VIP',    color: 'text-yellow-400', bg: 'bg-yellow-400/15 border-yellow-400/40', icon: Crown },
-  { value: 'regular', label: '단골',   color: 'text-[#00d9ff]',  bg: 'bg-[#00d9ff]/15 border-[#00d9ff]/40',  icon: Star },
+  { value: 'regular', label: '단골',   color: 'text-[#22c55e]',  bg: 'bg-[#22c55e]/15 border-[#22c55e]/40',  icon: Star },
   { value: 'new',     label: '신규',   color: 'text-green-400',  bg: 'bg-green-400/15 border-green-400/40',   icon: Users },
 ];
 
@@ -285,10 +285,10 @@ export default function RetailCustomerPage() {
         {[
           { label: '전체 고객', value: retailCustomers.length, sub: '명', color: 'text-pink-400', icon: Users },
           { label: 'VIP 고객', value: retailCustomers.filter(c => c.grade === 'vip').length, sub: '명', color: 'text-yellow-400', icon: Crown },
-          { label: '이번달 판매', value: retailSales.filter(s => s.date.startsWith(new Date().toISOString().slice(0, 7))).length, sub: '건', color: 'text-[#00d9ff]', icon: ShoppingBag },
+          { label: '이번달 판매', value: retailSales.filter(s => s.date.startsWith(new Date().toISOString().slice(0, 7))).length, sub: '건', color: 'text-[#22c55e]', icon: ShoppingBag },
           { label: '누적 매출', value: formatKRW(retailSales.reduce((s, r) => s + r.totalAmount, 0)), sub: '', color: 'text-green-400', icon: TrendingUp },
         ].map(card => (
-          <div key={card.label} className="bg-[#2d3142] rounded-xl p-4 border border-[#3d4362]">
+          <div key={card.label} className="bg-[#1c1f2e] rounded-xl p-4 border border-[#2e3147]">
             <div className="flex items-center justify-between mb-2">
               <span className="text-gray-400 text-xs">{card.label}</span>
               <card.icon size={14} className={card.color} />
@@ -302,7 +302,7 @@ export default function RetailCustomerPage() {
 
       {/* ── 고객 등록/수정 폼 ── */}
       {showCustForm && (
-        <div className="bg-[#2d3142] border border-pink-500/30 rounded-xl p-5">
+        <div className="bg-[#1c1f2e] border border-pink-500/30 rounded-xl p-5">
           <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
             <Users size={16} className="text-pink-400" />
             {editingCustId ? '고객 정보 수정' : '신규 고객 등록'}
@@ -315,7 +315,7 @@ export default function RetailCustomerPage() {
               {GRADES.map(g => (
                 <button key={g.value} type="button"
                   onClick={() => setCustForm(f => ({ ...f, grade: g.value }))}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition-all ${custForm.grade === g.value ? g.bg + ' ' + g.color : 'bg-[#1a1d29] text-gray-500 border-[#3d4362]'}`}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition-all ${custForm.grade === g.value ? g.bg + ' ' + g.color : 'bg-[#0f1117] text-gray-500 border-[#2e3147]'}`}
                 >
                   <g.icon size={13} />
                   {g.label}
@@ -329,49 +329,49 @@ export default function RetailCustomerPage() {
               <label className="text-gray-400 text-xs mb-1.5 block">고객명 <span className="text-red-400">*</span></label>
               <input type="text" placeholder="홍길동" value={custForm.name}
                 onChange={e => setCustForm(f => ({ ...f, name: e.target.value }))}
-                className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2.5 text-sm focus:border-pink-400 focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2.5 text-sm focus:border-pink-400 focus:outline-none"
               />
             </div>
             <div>
               <label className="text-gray-400 text-xs mb-1.5 flex items-center gap-1"><Phone size={11} />연락처</label>
               <input type="text" placeholder="010-1234-5678" value={custForm.phone}
                 onChange={e => setCustForm(f => ({ ...f, phone: e.target.value }))}
-                className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2.5 text-sm focus:border-pink-400 focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2.5 text-sm focus:border-pink-400 focus:outline-none"
               />
             </div>
             <div>
               <label className="text-gray-400 text-xs mb-1.5 flex items-center gap-1"><Gift size={11} />생년월일</label>
               <input type="date" value={custForm.birthDate}
                 onChange={e => setCustForm(f => ({ ...f, birthDate: e.target.value }))}
-                className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2.5 text-sm focus:border-pink-400 focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2.5 text-sm focus:border-pink-400 focus:outline-none"
               />
             </div>
             <div className="sm:col-span-2">
               <label className="text-gray-400 text-xs mb-1.5 flex items-center gap-1"><MapPin size={11} />주소 (배달지)</label>
               <input type="text" placeholder="서울특별시 ..." value={custForm.address}
                 onChange={e => setCustForm(f => ({ ...f, address: e.target.value }))}
-                className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2.5 text-sm focus:border-pink-400 focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2.5 text-sm focus:border-pink-400 focus:outline-none"
               />
             </div>
             <div>
               <label className="text-gray-400 text-xs mb-1.5 flex items-center gap-1"><Package size={11} />선호 품목</label>
               <input type="text" placeholder="신동진쌀 20kg" value={custForm.preferredProduct}
                 onChange={e => setCustForm(f => ({ ...f, preferredProduct: e.target.value }))}
-                className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2.5 text-sm focus:border-pink-400 focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2.5 text-sm focus:border-pink-400 focus:outline-none"
               />
             </div>
             <div>
               <label className="text-gray-400 text-xs mb-1.5 flex items-center gap-1"><Clock size={11} />구매 주기</label>
               <input type="text" placeholder="예: 2주마다 20kg" value={custForm.purchaseCycle}
                 onChange={e => setCustForm(f => ({ ...f, purchaseCycle: e.target.value }))}
-                className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2.5 text-sm focus:border-pink-400 focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2.5 text-sm focus:border-pink-400 focus:outline-none"
               />
             </div>
             <div className="sm:col-span-2 lg:col-span-3">
               <label className="text-gray-400 text-xs mb-1.5 block">메모 (특이사항, 배달 요청 등)</label>
               <textarea rows={2} placeholder="배달 시 문 앞에 두고 가세요 등..." value={custForm.memo}
                 onChange={e => setCustForm(f => ({ ...f, memo: e.target.value }))}
-                className="w-full bg-[#1a1d29] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-pink-400 focus:outline-none resize-none"
+                className="w-full bg-[#0f1117] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-pink-400 focus:outline-none resize-none"
               />
             </div>
           </div>
@@ -381,7 +381,7 @@ export default function RetailCustomerPage() {
               <Save size={15} />{editingCustId ? '수정 완료' : '등록'}
             </button>
             <button onClick={() => { setShowCustForm(false); setEditingCustId(null); }}
-              className="flex items-center gap-2 px-4 py-2 bg-[#3d4362] text-gray-300 rounded-lg hover:bg-[#4d5382] text-sm transition-colors">
+              className="flex items-center gap-2 px-4 py-2 bg-[#2e3147] text-gray-300 rounded-lg hover:bg-[#4d5382] text-sm transition-colors">
               <X size={15} />취소
             </button>
           </div>
@@ -395,14 +395,14 @@ export default function RetailCustomerPage() {
           <input
             type="text" placeholder="이름, 연락처, 주소 검색..."
             value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-[#2d3142] border border-[#3d4362] text-white rounded-xl text-sm focus:border-pink-400 focus:outline-none"
+            className="w-full pl-9 pr-4 py-2 bg-[#1c1f2e] border border-[#2e3147] text-white rounded-xl text-sm focus:border-pink-400 focus:outline-none"
           />
         </div>
         <div className="flex gap-1.5">
           {[{ value: 'all', label: '전체' }, ...GRADES.map(g => ({ value: g.value, label: g.label }))].map(g => (
             <button key={g.value}
               onClick={() => setGradeFilter(g.value as RetailGrade | 'all')}
-              className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${gradeFilter === g.value ? 'bg-pink-500 text-white' : 'bg-[#2d3142] text-gray-400 hover:text-white border border-[#3d4362]'}`}
+              className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${gradeFilter === g.value ? 'bg-pink-500 text-white' : 'bg-[#1c1f2e] text-gray-400 hover:text-white border border-[#2e3147]'}`}
             >
               {g.label}
             </button>
@@ -431,7 +431,7 @@ export default function RetailCustomerPage() {
 
                 return (
                   <div key={c.id}
-                    className={`bg-[#2d3142] rounded-xl border overflow-hidden transition-all ${isActive ? 'border-pink-500/60 ring-1 ring-pink-500/30' : 'border-[#3d4362] hover:border-[#5d6382]'}`}
+                    className={`bg-[#1c1f2e] rounded-xl border overflow-hidden transition-all ${isActive ? 'border-pink-500/60 ring-1 ring-pink-500/30' : 'border-[#2e3147] hover:border-[#5d6382]'}`}
                   >
                     <div className="flex items-center gap-3 px-4 py-3">
                       {/* 등급 아이콘 */}
@@ -453,7 +453,7 @@ export default function RetailCustomerPage() {
                         <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-400 flex-wrap">
                           {c.phone && <span className="flex items-center gap-1"><Phone size={10} />{c.phone}</span>}
                           {stats && (
-                            <span className="flex items-center gap-1 text-[#00d9ff]">
+                            <span className="flex items-center gap-1 text-[#22c55e]">
                               <ShoppingBag size={10} />{stats.count}회 · {formatKRW(stats.total)}
                             </span>
                           )}
@@ -469,7 +469,7 @@ export default function RetailCustomerPage() {
                       <div className="flex items-center gap-1 flex-shrink-0">
                         <button
                           onClick={() => setActiveCustomerId(isActive ? null : c.id)}
-                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${isActive ? 'bg-pink-500 text-white' : 'bg-[#3d4362] text-gray-300 hover:bg-pink-500/20 hover:text-pink-400'}`}
+                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${isActive ? 'bg-pink-500 text-white' : 'bg-[#2e3147] text-gray-300 hover:bg-pink-500/20 hover:text-pink-400'}`}
                         >
                           <ShoppingBag size={12} />
                           <span className="hidden sm:inline">기록</span>
@@ -478,14 +478,14 @@ export default function RetailCustomerPage() {
                           className="p-1.5 text-gray-500 hover:text-white transition-colors">
                           {expandedId === c.id ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
                         </button>
-                        <button onClick={() => handleEditCustomer(c)} className="p-1.5 text-gray-400 hover:text-[#00d9ff] transition-colors"><Edit2 size={14} /></button>
+                        <button onClick={() => handleEditCustomer(c)} className="p-1.5 text-gray-400 hover:text-[#22c55e] transition-colors"><Edit2 size={14} /></button>
                         <button onClick={() => handleDeleteCustomer(c.id, c.name)} className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
                       </div>
                     </div>
 
                     {/* 확장 상세 */}
                     {expandedId === c.id && (
-                      <div className="px-4 pb-4 pt-1 border-t border-[#3d4362]/50 space-y-1.5 text-sm">
+                      <div className="px-4 pb-4 pt-1 border-t border-[#2e3147]/50 space-y-1.5 text-sm">
                         {c.address && (
                           <div className="flex items-start gap-2">
                             <MapPin size={12} className="text-gray-500 mt-0.5 flex-shrink-0" />
@@ -511,7 +511,7 @@ export default function RetailCustomerPage() {
                           </div>
                         )}
                         {c.memo && (
-                          <div className="bg-[#1a1d29] rounded-lg px-3 py-2 text-gray-400 text-xs mt-2">
+                          <div className="bg-[#0f1117] rounded-lg px-3 py-2 text-gray-400 text-xs mt-2">
                             📝 {c.memo}
                           </div>
                         )}
@@ -526,9 +526,9 @@ export default function RetailCustomerPage() {
 
         {/* ── 판매 기록 패널 ── */}
         {activeCustomerId && activeCustomer && (
-          <div className="lg:col-span-3 bg-[#2d3142] rounded-xl border border-[#3d4362] overflow-hidden">
+          <div className="lg:col-span-3 bg-[#1c1f2e] rounded-xl border border-[#2e3147] overflow-hidden">
             {/* 패널 헤더 */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#3d4362] bg-[#252838]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#2e3147] bg-[#252838]">
               <div className="flex items-center gap-2">
                 <ShoppingBag size={16} className="text-pink-400" />
                 <span className="text-white font-semibold">{activeCustomer.name} 판매 기록</span>
@@ -549,7 +549,7 @@ export default function RetailCustomerPage() {
 
             {/* 판매 추가/수정 폼 */}
             {showSaleForm && (
-              <div className="p-4 border-b border-[#3d4362] bg-[#1e2130]">
+              <div className="p-4 border-b border-[#2e3147] bg-[#1e2130]">
                 <h4 className="text-white text-sm font-medium mb-3 flex items-center gap-2">
                   <ArrowUpRight size={14} className="text-pink-400" />
                   {editingSaleId ? '판매 수정' : '판매 기록 추가'}
@@ -559,7 +559,7 @@ export default function RetailCustomerPage() {
                     <label className="text-gray-400 text-xs mb-1 block">날짜</label>
                     <input type="date" value={saleForm.date}
                       onChange={e => handleSaleFormChange('date', e.target.value)}
-                      className="w-full bg-[#2d3142] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-pink-400 focus:outline-none"
+                      className="w-full bg-[#1c1f2e] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-pink-400 focus:outline-none"
                     />
                   </div>
                   <div className="relative">
@@ -568,14 +568,14 @@ export default function RetailCustomerPage() {
                       onChange={e => { setProductSearch(e.target.value); handleSaleFormChange('productName', e.target.value); setShowProductSug(true); }}
                       onFocus={() => setShowProductSug(true)}
                       onBlur={() => setTimeout(() => setShowProductSug(false), 150)}
-                      className="w-full bg-[#2d3142] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-pink-400 focus:outline-none"
+                      className="w-full bg-[#1c1f2e] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-pink-400 focus:outline-none"
                     />
                     {showProductSug && productSuggestions.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-[#2d3142] border border-[#3d4362] rounded-lg shadow-xl z-20 max-h-36 overflow-y-auto">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-[#1c1f2e] border border-[#2e3147] rounded-lg shadow-xl z-20 max-h-36 overflow-y-auto">
                         {productSuggestions.map(s => (
                           <button key={s.name} type="button"
                             onMouseDown={() => { setProductSearch(s.name); handleSaleFormChange('productName', s.name); if (s.unit) handleSaleFormChange('unit', s.unit); setShowProductSug(false); }}
-                            className="w-full text-left px-3 py-2 hover:bg-[#3d4362] text-sm text-gray-300 hover:text-white transition-colors"
+                            className="w-full text-left px-3 py-2 hover:bg-[#2a2d3e] text-sm text-gray-300 hover:text-white transition-colors"
                           >
                             {s.name} <span className="text-gray-500 text-xs">({s.unit})</span>
                           </button>
@@ -589,7 +589,7 @@ export default function RetailCustomerPage() {
                       {UNITS.map(u => (
                         <button key={u} type="button"
                           onClick={() => handleSaleFormChange('unit', u)}
-                          className={`px-2 py-1.5 rounded text-xs transition-colors ${saleForm.unit === u ? 'bg-pink-500 text-white' : 'bg-[#2d3142] text-gray-400 border border-[#3d4362] hover:text-white'}`}
+                          className={`px-2 py-1.5 rounded text-xs transition-colors ${saleForm.unit === u ? 'bg-pink-500 text-white' : 'bg-[#1c1f2e] text-gray-400 border border-[#2e3147] hover:text-white'}`}
                         >{u}</button>
                       ))}
                     </div>
@@ -598,21 +598,21 @@ export default function RetailCustomerPage() {
                     <label className="text-gray-400 text-xs mb-1 block">수량</label>
                     <input type="number" min="0" step="0.1" placeholder="0" value={saleForm.quantity || ''}
                       onChange={e => handleSaleFormChange('quantity', e.target.value)}
-                      className="w-full bg-[#2d3142] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-pink-400 focus:outline-none"
+                      className="w-full bg-[#1c1f2e] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-pink-400 focus:outline-none"
                     />
                   </div>
                   <div>
                     <label className="text-gray-400 text-xs mb-1 block">단가</label>
                     <input type="number" min="0" placeholder="0" value={saleForm.unitPrice || ''}
                       onChange={e => handleSaleFormChange('unitPrice', e.target.value)}
-                      className="w-full bg-[#2d3142] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-pink-400 focus:outline-none"
+                      className="w-full bg-[#1c1f2e] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-pink-400 focus:outline-none"
                     />
                   </div>
                   <div>
                     <label className="text-gray-400 text-xs mb-1 block">합계금액</label>
                     <input type="number" min="0" placeholder="자동계산" value={saleForm.totalAmount || ''}
                       onChange={e => handleSaleFormChange('totalAmount', e.target.value)}
-                      className="w-full bg-[#2d3142] border border-pink-400/40 text-pink-300 rounded-lg px-3 py-2 text-sm focus:border-pink-400 focus:outline-none font-semibold"
+                      className="w-full bg-[#1c1f2e] border border-pink-400/40 text-pink-300 rounded-lg px-3 py-2 text-sm focus:border-pink-400 focus:outline-none font-semibold"
                     />
                   </div>
                   {/* 결제 방법 */}
@@ -622,7 +622,7 @@ export default function RetailCustomerPage() {
                       {PAYMENT_METHODS.map(pm => (
                         <button key={pm.value} type="button"
                           onClick={() => handleSaleFormChange('paymentMethod', pm.value)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${saleForm.paymentMethod === pm.value ? 'bg-pink-500/20 border-pink-500/50 text-pink-300' : 'bg-[#2d3142] border-[#3d4362] text-gray-400 hover:text-white'}`}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${saleForm.paymentMethod === pm.value ? 'bg-pink-500/20 border-pink-500/50 text-pink-300' : 'bg-[#1c1f2e] border-[#2e3147] text-gray-400 hover:text-white'}`}
                         >
                           <pm.icon size={12} />{pm.label}
                         </button>
@@ -633,7 +633,7 @@ export default function RetailCustomerPage() {
                     <label className="text-gray-400 text-xs mb-1 block">메모</label>
                     <input type="text" placeholder="배달 완료 등..." value={saleForm.memo}
                       onChange={e => handleSaleFormChange('memo', e.target.value)}
-                      className="w-full bg-[#2d3142] border border-[#3d4362] text-white rounded-lg px-3 py-2 text-sm focus:border-pink-400 focus:outline-none"
+                      className="w-full bg-[#1c1f2e] border border-[#2e3147] text-white rounded-lg px-3 py-2 text-sm focus:border-pink-400 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -644,7 +644,7 @@ export default function RetailCustomerPage() {
                     <Save size={14} />{editingSaleId ? '수정' : '저장'}
                   </button>
                   <button onClick={() => { setShowSaleForm(false); setEditingSaleId(null); }}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-[#3d4362] text-gray-300 rounded-lg text-sm transition-colors">
+                    className="flex items-center gap-1.5 px-3 py-2 bg-[#2e3147] text-gray-300 rounded-lg text-sm transition-colors">
                     <X size={14} />취소
                   </button>
                 </div>
@@ -657,9 +657,9 @@ export default function RetailCustomerPage() {
               if (!stats) return null;
               const days = stats.lastDate ? daysSince(stats.lastDate) : null;
               return (
-                <div className="px-4 py-3 border-b border-[#3d4362] grid grid-cols-3 gap-3">
+                <div className="px-4 py-3 border-b border-[#2e3147] grid grid-cols-3 gap-3">
                   <div className="text-center">
-                    <div className="text-[#00d9ff] font-bold text-lg">{stats.count}회</div>
+                    <div className="text-[#22c55e] font-bold text-lg">{stats.count}회</div>
                     <div className="text-gray-500 text-xs">총 구매 횟수</div>
                   </div>
                   <div className="text-center">
@@ -689,11 +689,11 @@ export default function RetailCustomerPage() {
                 </button>
               </div>
             ) : (
-              <div className="divide-y divide-[#3d4362]/50 max-h-[500px] overflow-y-auto">
+              <div className="divide-y divide-[#2e3147]/50 max-h-[500px] overflow-y-auto">
                 {activeSales.map(s => {
                   const pm = PAYMENT_METHODS.find(p => p.value === s.paymentMethod);
                   return (
-                    <div key={s.id} className="flex items-center gap-3 px-4 py-3 hover:bg-[#3d4362]/20 transition-colors">
+                    <div key={s.id} className="flex items-center gap-3 px-4 py-3 hover:bg-[#2a2d3e]/20 transition-colors">
                       <div className="flex-shrink-0">
                         <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center">
                           <Calendar size={14} className="text-pink-400" />
@@ -703,7 +703,7 @@ export default function RetailCustomerPage() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-white text-sm font-medium">{s.productName || '기타'}</span>
                           {pm && (
-                            <span className={`text-xs px-1.5 py-0.5 rounded flex items-center gap-0.5 ${s.paymentMethod === 'credit' ? 'bg-red-500/10 text-red-400' : 'bg-[#3d4362] text-gray-400'}`}>
+                            <span className={`text-xs px-1.5 py-0.5 rounded flex items-center gap-0.5 ${s.paymentMethod === 'credit' ? 'bg-red-500/10 text-red-400' : 'bg-[#2e3147] text-gray-400'}`}>
                               <pm.icon size={10} />{pm.label}
                             </span>
                           )}
@@ -716,7 +716,7 @@ export default function RetailCustomerPage() {
                       <div className="flex-shrink-0 text-right">
                         <div className="text-pink-300 font-semibold text-sm">{formatKRW(s.totalAmount)}</div>
                         <div className="flex gap-1 mt-1">
-                          <button onClick={() => handleEditSale(s)} className="p-1 text-gray-500 hover:text-[#00d9ff] transition-colors"><Edit2 size={12} /></button>
+                          <button onClick={() => handleEditSale(s)} className="p-1 text-gray-500 hover:text-[#22c55e] transition-colors"><Edit2 size={12} /></button>
                           <button onClick={() => handleDeleteSale(s.id)} className="p-1 text-gray-500 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
                         </div>
                       </div>

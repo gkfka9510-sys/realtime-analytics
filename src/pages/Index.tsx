@@ -62,10 +62,10 @@ const Index: React.FC = () => {
   // 초기 로딩
   if (!authState.checked) {
     return (
-      <div className="min-h-screen bg-[#1a1d29] flex items-center justify-center">
+      <div className="min-h-screen bg-[#0f1117] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="text-5xl">🌾</div>
-          <Loader2 className="animate-spin text-[#00d9ff]" size={32} />
+          <Loader2 className="animate-spin text-[#22c55e]" size={32} />
           <p className="text-gray-400 text-sm">쌀집 대시보드 로딩 중...</p>
         </div>
       </div>

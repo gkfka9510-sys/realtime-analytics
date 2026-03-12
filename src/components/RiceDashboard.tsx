@@ -21,29 +21,30 @@ const formatKRW = (v: number) => `₩${v.toLocaleString('ko-KR')}`;
 
 // ── 태평농산 색상 팔레트 ──────────────────────────────────────
 const C = {
-  // 배경
-  bg:         '#0f1a12',   // 딥 다크 그린
-  surface:    '#172015',   // 카드 배경
-  surfaceHov: '#1e2a1a',   // 카드 호버
-  border:     '#253320',   // 테두리
-  borderHov:  '#3a5030',   // 호버 테두리
-  // 브랜드
-  green:      '#2d9e4e',   // 메인 그린
-  greenLight: '#3db866',   // 밝은 그린
-  greenGlow:  'rgba(45,158,78,0.15)',
-  gold:       '#c8a951',   // 골드
-  goldLight:  '#f0c96a',
-  goldGlow:   'rgba(200,169,81,0.15)',
-  orange:     '#e8621a',
-  // 텍스트
-  textPri:    '#f0f4ee',   // 주요 텍스트
-  textSec:    '#8aad80',   // 보조 텍스트
-  textMute:   '#4a6b42',   // 뮤트 텍스트
-  // 상태색
-  red:        '#f87171',
-  yellow:     '#fbbf24',
-  blue:       '#60a5fa',
-  pink:       '#f472b6',
+  // 배경 — 슬레이트 다크 (밝고 깔끔, 가독성 최우선)
+  bg:         '#0f1117',   // 최상위 배경 (딥 슬레이트)
+  surface:    '#1c1f2e',   // 카드/사이드바 배경
+  surfaceHov: '#252840',   // 카드 호버
+  surface2:   '#2a2d3e',   // 입력/내부 배경
+  border:     '#2e3147',   // 기본 테두리
+  borderHov:  '#4a4f6e',   // 호버 테두리
+  // 브랜드 — 선명한 에메랄드 그린 유지
+  green:      '#22c55e',   // 메인 그린 (밝고 선명)
+  greenLight: '#4ade80',   // 밝은 그린
+  greenGlow:  'rgba(34,197,94,0.15)',
+  gold:       '#f59e0b',   // 앰버 골드 (선명)
+  goldLight:  '#fbbf24',
+  goldGlow:   'rgba(245,158,11,0.15)',
+  orange:     '#f97316',   // 오렌지 (선명)
+  // 텍스트 — 충분한 대비
+  textPri:    '#f1f5f9',   // 주요 텍스트 (거의 흰색)
+  textSec:    '#94a3b8',   // 보조 텍스트 (슬레이트-400)
+  textMute:   '#475569',   // 뮤트 텍스트 (슬레이트-600)
+  // 상태색 — 선명하고 구분 명확
+  red:        '#f87171',   // 레드
+  yellow:     '#fbbf24',   // 옐로우
+  blue:       '#60a5fa',   // 블루
+  pink:       '#f472b6',   // 핑크
 };
 
 const LOGO_IMAGE = 'https://www.genspark.ai/api/files/s/QTqN4PyP?cache_control=3600';
@@ -206,9 +207,9 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
               { label:'재구매 유도', value:`${retailReminderCount}명`, icon:Clock, color: retailReminderCount > 0 ? C.yellow : C.textMute },
             ].map(card => (
               <div key={card.label} onClick={() => setActiveTab('retail')}
-                style={{ background:C.bg, borderRadius:12, padding:'12px', cursor:'pointer', border:`1px solid ${C.border}`, transition:'background 0.2s' }}
+                style={{ background:C.surface2, borderRadius:12, padding:'12px', cursor:'pointer', border:`1px solid ${C.border}`, transition:'background 0.2s' }}
                 onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = C.surfaceHov}
-                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = C.bg}
+                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = C.surface2}
               >
                 <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:6 }}>
                   <card.icon size={13} color={card.color} />
@@ -467,7 +468,7 @@ export default function RiceDashboard({ username, displayName, onLogout }: Props
 
         {/* 하단 순이익 */}
         <div style={{ padding:'12px 14px', borderTop:`1px solid ${C.border}` }}>
-          <div style={{ background:C.bg, borderRadius:12, padding:'12px 14px', border:`1px solid ${C.border}` }}>
+          <div style={{ background:C.surface2, borderRadius:12, padding:'12px 14px', border:`1px solid ${C.border}` }}>
             <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
               <Leaf size={12} color={C.green} />
               <p style={{ color:C.textSec, fontSize:11, margin:0 }}>이번달 순이익</p>
