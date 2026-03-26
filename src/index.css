@@ -94,10 +94,43 @@
 
   body {
     @apply bg-background text-foreground font-sans dark:bg-background dark:text-foreground;
+    background-color: #0f1117;
+    color: #f1f5f9;
   }
 
   pre, code {
     @apply font-mono;
+  }
+
+  /* 커스텀 스크롤바 */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0f1117;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2e3147;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #22c55e;
+  }
+
+  /* 입력 필드 자동완성 배경 */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #1c1f2e inset !important;
+    -webkit-text-fill-color: #f1f5f9 !important;
+    caret-color: #f1f5f9 !important;
+  }
+
+  /* select 드롭다운 다크 */
+  select option {
+    background-color: #1c1f2e;
+    color: #f1f5f9;
   }
 }
 
